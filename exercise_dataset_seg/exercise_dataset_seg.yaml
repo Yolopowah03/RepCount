@@ -1,0 +1,6 @@
+path: /datatmp2/joan/tfg_joan/exercise_dataset_seg # dataset root dir
+train: train/images # train images (relative to 'path')
+val: val/images # val images (relative to 'path')
+
+names:
+    0: barra
