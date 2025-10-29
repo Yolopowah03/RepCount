@@ -33,7 +33,7 @@ LABELS_TRAIN_DIR = '/datatmp2/joan/tfg_joan/LSTM_dataset/train/labels'
 
 CLASSES = ['bench_press', 'deadlift', 'squat', 'pull_up']
 
-MODEL_SAVE_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_RepCount1.pth'
+MODEL_SAVE_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_RepCount2.pth'
 
 BATCH_SIZE = 8
 SEQ_LEN = 50
@@ -207,6 +207,9 @@ if __name__ == "__main__":
                             instance_info = data.get('instance_info', {})
                             
                             keypoints = instance_info[0]['keypoints']
+                            
+                            if keypoints is None or keypoints == np.zeros((17,2)).tolist():
+                                continue
 
                         video_list.append(np.array(keypoints).reshape(-1, 17, 2))
             if len(video_list) > 0:     

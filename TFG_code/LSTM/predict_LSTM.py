@@ -11,7 +11,7 @@ N_KEYPOINTS = 17
 VEL = True
 SEQ_LEN = 50
 
-MODEL_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_RepCount1.pth'
+MODEL_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_RepCount2.pth'
 PREDICT_DIR = '/datatmp2/joan/tfg_joan/LSTM_dataset/test/labels'
 
 class LSTMClassifier(nn.Module):
@@ -164,7 +164,6 @@ if __name__ == "__main__":
             for file in files:
                 if file.endswith('.json'):
                     if class_name in CLASSES:
-                        class_idx = CLASSES.index(class_name)
                         file_path = os.path.join(sub_dir, file)
                         with open(file_path, 'r') as f:
                             

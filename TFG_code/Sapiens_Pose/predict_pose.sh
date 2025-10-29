@@ -7,8 +7,8 @@ MODE='torchscript'
 SAPIENS_CHECKPOINT_ROOT=$SAPIENS_CHECKPOINT_ROOT/$MODE
 
 # Directorio raíz de entrada y salida
-INPUT_ROOT='/datatmp2/joan/tfg_joan/LSTM_dataset/train/images/squat'
-OUTPUT_ROOT="/datatmp2/joan/tfg_joan/LSTM_dataset/train/labels/squat"
+INPUT_ROOT='/datatmp2/joan/tfg_joan/LSTM_dataset/train/images/bench_press'
+OUTPUT_ROOT="/datatmp2/joan/tfg_joan/LSTM_dataset/train/labels/bench_press"
 
 MODEL_NAME='sapiens_1b'
 CHECKPOINT=/datatmp2/joan/tfg_joan/sapiens/sapiens_lite_host/torchscript/pose/checkpoints/sapiens_1b/sapiens_1b_coco_best_coco_AP_821_torchscript.pt2

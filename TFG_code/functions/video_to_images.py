@@ -2,7 +2,7 @@ import os
 import cv2 as cv #type: ignore
 
 VIDEO_FOLDER = '/datatmp2/joan/tfg_joan/videos/test/bench_press'
-OUTPUT_FOLDER = '/datatmp2/joan/tfg_joan/images/test/bench_press'
+OUTPUT_FOLDER = '/datatmp2/joan/tfg_joan/LSTM_dataset/test/images/bench_press'
 
 if not os.path.exists(OUTPUT_FOLDER):
         os.makedirs(OUTPUT_FOLDER)
