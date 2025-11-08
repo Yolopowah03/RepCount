@@ -33,11 +33,11 @@ LABELS_TRAIN_DIR = '/datatmp2/joan/tfg_joan/LSTM_dataset/train/labels'
 
 CLASSES = ['bench_press', 'deadlift', 'squat', 'pull_up']
 
-MODEL_SAVE_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_RepCount2.pth'
+MODEL_SAVE_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_RepCount3.pth'
 
 BATCH_SIZE = 8
 SEQ_LEN = 50
-EPOCHS = 100
+EPOCHS = 60
 
 def normalize_keypoints(coords):
     #Es normalitzen les coordenades respecte al tors
@@ -60,28 +60,28 @@ def normalize_keypoints(coords):
 
 def frame_to_feature(coords_frame):
     #Converteix les coordenades d'un frame a un vector de característiques
-    # (17,2) -> (34,)
-    return coords_frame.flatten()  # 34-d vector
+    # (13,2) -> (26,)
+    return coords_frame.flatten()  # 26-d vector
 
 def seq_to_features(coords_seq):
     # Converteix una seqüència de coordenades a una seqüència de vectors de característiques
     # A banda de la posició dels keypoints s'afegeix la diferencia entre el frame anterior, 
     # cosa que afegeix la informació de moviment i permet determinar l'exercici
-    # (T,17,2) -> (T,68)
+    # (T,13,2) -> (T,52)
     
     # T = Nombre de imatges per video
     
     # Normalitzar coordenades
-    coords_normalized = normalize_keypoints(coords_seq)  # (T,17,2)
+    coords_normalized = normalize_keypoints(coords_seq)  # (T,13,2)
     
     # Convertir cada frame a vector de característiques
-    feats = np.array([frame_to_feature(frame) for frame in coords_normalized])  # (T,34)
+    feats = np.array([frame_to_feature(frame) for frame in coords_normalized])  # (T,26)
     
     # Calcular velocitat com a diferència entre frames consecutius
-    vel = np.vstack([np.zeros((1, feats.shape[1])), np.diff(feats, axis=0)])  # (T,34)
+    vel = np.vstack([np.zeros((1, feats.shape[1])), np.diff(feats, axis=0)])  # (T,26)
     
     # Concatenar posició i velocitat
-    feats_all = np.concatenate([feats, vel], axis=1)  # (T,68)
+    feats_all = np.concatenate([feats, vel], axis=1)  # (T,52)
     
     return feats_all
 
@@ -122,7 +122,7 @@ def collate_fn(batch):
     return X, lengths, ys
 
 class LSTMClassifier(nn.Module):
-    def __init__(self, input_size=68, hidden_size=256, num_layers=2, num_classes=4, dropout=0.5, num_directions=1):
+    def __init__(self, input_size=52, hidden_size=256, num_layers=2, num_classes=4, dropout=0.4, num_directions=1):
         super().__init__()
         self.lstm = nn.LSTM(input_size, hidden_size, num_layers=num_layers,
                             batch_first=True, dropout=dropout, bidirectional=False)
@@ -188,7 +188,7 @@ def save_checkpoint(path, model, optimizer=None, scheduler=None, epoch=None, bes
 
 # ---------- Ejemplo de uso ----------
 if __name__ == "__main__":
-    # ejemplo dummy: X_list = [np.random.rand(random_T,17,2) for ...], y_list = [...]
+    # ejemplo dummy: X_list = [np.random.rand(random_T,13,2) for ...], y_list = [...]
     
     X_list, y_list = [], []
 
@@ -208,10 +208,13 @@ if __name__ == "__main__":
                             
                             keypoints = instance_info[0]['keypoints']
                             
-                            if keypoints is None or keypoints == np.zeros((17,2)).tolist():
+                            if keypoints is None or keypoints == np.zeros((13,2)).tolist():
                                 continue
+                            
+                            #Eliminar cames dels keypoints
+                            keypoints = [keypoints[i] for i in range(len(keypoints)) if i not in [13,14,15,16]]
 
-                        video_list.append(np.array(keypoints).reshape(-1, 17, 2))
+                        video_list.append(np.array(keypoints).reshape(-1, 13, 2))
             if len(video_list) > 0:     
                 X_list.append(np.vstack(video_list))
                 y_list.append(class_idx)
@@ -249,8 +252,8 @@ if __name__ == "__main__":
     val_loader   = DataLoader(val_ds, batch_size=BATCH_SIZE, shuffle=False, collate_fn=collate_fn, num_workers=2)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    sample_feat = seq_to_features(np.zeros((10,17,2)))
-    input_size = sample_feat.shape[1]  # 17 * 2 * 2 = 68 (n. keypoints/frame * 2 coords * pos+vel)
+    sample_feat = seq_to_features(np.zeros((10,13,2)))
+    input_size = sample_feat.shape[1]  # 13 * 2 * 2 = 52 (n. keypoints/frame * 2 coords * pos+vel)
     model = LSTMClassifier(input_size=input_size, hidden_size=256, num_layers=2, num_classes=num_classes, num_directions=1).to(device)
 
     opt = torch.optim.Adam(model.parameters(), lr=1e-3)

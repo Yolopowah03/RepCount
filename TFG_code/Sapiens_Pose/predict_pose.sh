@@ -7,8 +7,8 @@ MODE='torchscript'
 SAPIENS_CHECKPOINT_ROOT=$SAPIENS_CHECKPOINT_ROOT/$MODE
 
 # Directorio raíz de entrada y salida
-INPUT_ROOT='/datatmp2/joan/tfg_joan/LSTM_dataset/train/images/bench_press'
-OUTPUT_ROOT="/datatmp2/joan/tfg_joan/LSTM_dataset/train/labels/bench_press"
+INPUT_ROOT='/datatmp2/joan/tfg_joan/LSTM_dataset/train/images/squat'
+OUTPUT_ROOT="/datatmp2/joan/tfg_joan/LSTM_dataset/train/labels/squat"
 
 MODEL_NAME='sapiens_1b'
 CHECKPOINT=/datatmp2/joan/tfg_joan/sapiens/sapiens_lite_host/torchscript/pose/checkpoints/sapiens_1b/sapiens_1b_coco_best_coco_AP_821_torchscript.pt2
@@ -27,7 +27,6 @@ BATCH_SIZE=8
 
 export TF_CPP_MIN_LOG_LEVEL=2
 
-# 🔥 Recorremos todas las subcarpetas dentro de INPUT_ROOT
 find "$INPUT_ROOT" -mindepth 1 -type d | while read -r INPUT; do
   REL_PATH=${INPUT#"$INPUT_ROOT"}   # ahora sí quita bien el prefijo
   OUTPUT="$OUTPUT_ROOT/$REL_PATH"

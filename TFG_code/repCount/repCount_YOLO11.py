@@ -4,24 +4,41 @@ import sys
 import json
 import numpy as np
 import math
+import importlib
+import inspect
 
 PYTHON_LSTM_PATH = '/datatmp2/joan/tfg_joan/TFG_code/LSTM'
 sys.path.append(PYTHON_LSTM_PATH)
 PYTHON_YOLO_PATH = '/datatmp2/joan/tfg_joan/TFG_code/YOLO_pose'
 sys.path.append(PYTHON_YOLO_PATH)
+PYTHON_HOMOGRAPHY_PATH = '/datatmp2/joan/tfg_joan/TFG_code/Homography'
+sys.path.append(PYTHON_HOMOGRAPHY_PATH)
 
+if 'predict_LSTM_mod' in sys.modules:
+    del sys.modules['predict_LSTM_mod']
+    
+if 'predict_YOLO11_pose_mod' in sys.modules:
+    del sys.modules['predict_YOLO11_pose_mod']
+    
+if 'affine_2D_mod' in sys.modules:
+    del sys.modules['affine_2D_mod']
+    
 import predict_LSTM_mod # type: ignore
-from predict_LSTM_mod import lstm_main # type: ignore
 import predict_YOLO11_pose_mod # type: ignore
-from predict_YOLO11_pose_mod import yolo_main # type: ignore
+import affine_2D_mod # type: ignore
 
-VIDEO_PATH = '/datatmp2/joan/tfg_joan/videos/test/bench_press/bench_press_1.mp4'
-OUTPUT_DIR="/datatmp2/joan/tfg_joan/results/YOLO_pose/repcount_bench_press1"
+print(f"El archivo que Python está cargando es: {inspect.getfile(predict_LSTM_mod)}")
+print(f"El archivo que Python está cargando es: {inspect.getfile(predict_YOLO11_pose_mod)}")
+print(f"El archivo que Python está cargando es: {inspect.getfile(affine_2D_mod)}")
 
+
+VIDEO_PATH = '/datatmp2/joan/tfg_joan/videos/test/bench_press/bench_press_2.mp4'
+OUTPUT_DIR_POSE = "/datatmp2/joan/tfg_joan/results/YOLO_pose/repcount_bench_press2"
+OUTPUT_DIR_VIDEO = "/datatmp2/joan/tfg_joan/results/repCount/repcount_bench_press2.mp4"
 
 CLASSES = ['bench_press', 'deadlift', 'squat', 'pull_up']
-
-LSTM_MODEL_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_RepCount1.pth'
+N_KEYPOINTS = 13
+SKIP_FRAMES = 2
 
 # PRE_LOADED_JSON_DIR = '/datatmp2/joan/tfg_joan/results/repcount'
 PRE_LOADED_JSON_DIR = '/datatmp2/joan/tfg_joan/results/YOLO_pose/repcount_bench_press1'
@@ -29,10 +46,11 @@ PRE_LOADED_JSON_DIR = '/datatmp2/joan/tfg_joan/results/YOLO_pose/repcount_bench_
 #YOLO
 YOLO_MODEL_PATH='/datatmp2/joan/tfg_joan/models_YOLO11_pose/yolo11m-pose.pt'
 VALID_GPU_ID = 3
-
+SAVE_FRAMES = False
+SAVE_JSON = False
 
 #LSTM 
-N_KEYPOINTS = 17
+LSTM_MODEL_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_13_RepCount1.pth'
 VEL = True
 SEQ_LEN = 80
 
@@ -57,25 +75,25 @@ COCO_KPTS_COLORS = [
 ]
 
 COCO_SKELETON_INFO = {
-    0: dict(link=(15, 13), id=0, color=[0, 255, 0]),
-    1: dict(link=(13, 11), id=1, color=[0, 255, 0]),
-    2: dict(link=(16, 14), id=2, color=[255, 128, 0]),
-    3: dict(link=(14, 12), id=3, color=[255, 128, 0]),
-    4: dict(link=(11, 12), id=4, color=[51, 153, 255]),
-    5: dict(link=(5, 11), id=5, color=[51, 153, 255]),
-    6: dict(link=(6, 12), id=6, color=[51, 153, 255]),
-    7: dict(link=(5, 6), id=7, color=[51, 153, 255]),
-    8: dict(link=(5, 7), id=8, color=[0, 255, 0]),
-    9: dict(link=(6, 8), id=9, color=[255, 128, 0]),
-    10: dict(link=(7, 9), id=10, color=[0, 255, 0]),
-    11: dict(link=(8, 10), id=11, color=[255, 128, 0]),
-    12: dict(link=(1, 2), id=12, color=[51, 153, 255]),
-    13: dict(link=(0, 1), id=13, color=[51, 153, 255]),
-    14: dict(link=(0, 2), id=14, color=[51, 153, 255]),
-    15: dict(link=(1, 3), id=15, color=[51, 153, 255]),
-    16: dict(link=(2, 4), id=16, color=[51, 153, 255]),
-    17: dict(link=(3, 5), id=17, color=[51, 153, 255]),
-    18: dict(link=(4, 6), id=18, color=[51, 153, 255])
+    # 0: dict(link=(15, 13), id=0, color=[0, 255, 0]),
+    # 1: dict(link=(13, 11), id=1, color=[0, 255, 0]),
+    # 2: dict(link=(16, 14), id=2, color=[255, 128, 0]),
+    # 3: dict(link=(14, 12), id=3, color=[255, 128, 0]),
+    0: dict(link=(11, 12), id=4, color=[51, 153, 255]),
+    1: dict(link=(5, 11), id=5, color=[51, 153, 255]),
+    2: dict(link=(6, 12), id=6, color=[51, 153, 255]),
+    3: dict(link=(5, 6), id=7, color=[51, 153, 255]),
+    4: dict(link=(5, 7), id=8, color=[0, 255, 0]),
+    5: dict(link=(6, 8), id=9, color=[255, 128, 0]),
+    6: dict(link=(7, 9), id=10, color=[0, 255, 0]),
+    7: dict(link=(8, 10), id=11, color=[255, 128, 0]),
+    8: dict(link=(1, 2), id=12, color=[51, 153, 255]),
+    9: dict(link=(0, 1), id=13, color=[51, 153, 255]),
+    10: dict(link=(0, 2), id=14, color=[51, 153, 255]),
+    11: dict(link=(1, 3), id=15, color=[51, 153, 255]),
+    12: dict(link=(2, 4), id=16, color=[51, 153, 255]),
+    13: dict(link=(3, 5), id=17, color=[51, 153, 255]),
+    14: dict(link=(4, 6), id=18, color=[51, 153, 255])
 }
 
 #KEYPOINT INDEX:
@@ -98,28 +116,68 @@ COCO_SKELETON_INFO = {
 # 15: left_ankle
 # 16: right_ankle
 
-def extract_images_from_video(video_path):
+def extract_images_from_video(video_path, skip_frames):
     
     images = []
     idx = 0
     
     cap1 = cv.VideoCapture(video_path)
+    fps_og = cap1.get(cv.CAP_PROP_FPS)
+    
+    success, frame = cap1.read()
 
-    while cap1.isOpened():
-        ret, frame = cap1.read()
-        if not ret:
-            break
+    while success:
 
-        if idx % 2 == 1:
-            continue
-        
+        if idx % skip_frames != 1:
+            images.append(frame)
+
         idx += 1
-
-        images.append(frame)
+        
+        success, frame = cap1.read()
 
     cap1.release()
 
-    return images
+    return images, fps_og
+
+def draw_keypoints(image, kpts, kpt_colors, skeleton_info, kpt_thr=0.3, radius=3, thickness=2):
+    
+    for kid, kpt in sorted(enumerate(kpts)):
+        # print(kpt)
+
+        color = kpt_colors[kid]
+        if not isinstance(color, str):
+            color = tuple(int(c) for c in color[::-1])
+        image = cv.circle(image, (int(kpt[0]), int(kpt[1])), int(radius), color, -1)
+        
+        # draw skeleton
+        for skid, link_info in skeleton_info.items():
+            pt1_idx, pt2_idx = link_info['link']
+            color = link_info['color'][::-1] # BGR
+
+            pt1 = kpts[pt1_idx]
+            pt2 = kpts[pt2_idx]
+
+            x1_coord = int(pt1[0]); y1_coord = int(pt1[1])
+            x2_coord = int(pt2[0]); y2_coord = int(pt2[1])
+            cv.line(image, (x1_coord, y1_coord), (x2_coord, y2_coord), color, thickness=thickness)
+            
+    return image
+
+def draw_counter(image, count):
+    font = cv.FONT_HERSHEY_SIMPLEX
+    bottomLeftCornerOfText = (50, 50)
+    fontScale = 1
+    fontColor = (0, 255, 0)
+    lineType = 2
+
+    cv.putText(image, f'Rep Count: {count}', 
+        bottomLeftCornerOfText, 
+        font, 
+        fontScale,
+        fontColor,
+        lineType)
+    
+    return image
 
 def get_angle(x0, y0, x1, y1, x2, y2):
     
@@ -168,8 +226,8 @@ def repcount_bench_press(keypoints):
             initialPosition['frame'] = i
             initialPosition['extended_arm_dist'] = extended_arm_dist
             end_rep = False
-            print('Initial Position arm_dist:')
-            print(initialPosition)
+            # print('Initial Position arm_dist:')
+            # print(initialPosition)
             timestamps_initial.append(i)
             
         else:
@@ -177,8 +235,8 @@ def repcount_bench_press(keypoints):
                 initialPosition['extended_arm_dist'] = extended_arm_dist
                 initialPosition['frame'] = i
                 end_rep = False
-                print('Initial Position:')
-                print(initialPosition)
+                # print('Initial Position:')
+                # print(initialPosition)
                 timestamps_initial.append(i)
                 
             if initialPosition is not None:
@@ -187,15 +245,15 @@ def repcount_bench_press(keypoints):
                     initialPosition['frame'] = i
                     end_rep = False
                     
-                print('Extended arm dist:')
-                print(extended_arm_dist)
+                # print('Extended arm dist:')
+                # print(extended_arm_dist)
                     
                 #Trobar fi de repetició
                 if end_rep == False and extended_arm_dist <= (initialPosition['extended_arm_dist'] * 0.5):
                     end_rep = True
                     timestamps.append(i)
                     
-    print('timestamps_initial', timestamps_initial)
+    # print('timestamps_initial', timestamps_initial)
     return timestamps
     
 def repcount_deadlift(keypoints):
@@ -217,11 +275,24 @@ def repcount_pull_up(keypoints):
     
     # return timestamps
     pass
+
+def save_video(image_list, output_path, fps):
     
+    height, width, layers = image_list[0].shape
+    frame_size = (width, height)
+    
+    fourcc = cv.VideoWriter_fourcc(*'mp4v')
+    out = cv.VideoWriter(output_path, fourcc, fps, frame_size)
+
+    for img in image_list:
+        out.write(img)
+
+    out.release()
+
 if __name__ == "__main__":
-    
-    # images = extract_images_from_video(VIDEO_PATH)
-    
+    images, fps_og = extract_images_from_video(VIDEO_PATH, SKIP_FRAMES)
+    print('EXTRACTED IMAGES:', len(images))
+
     pre_loaded = False
 
     if PRE_LOADED_JSON_DIR is not None and os.path.exists(PRE_LOADED_JSON_DIR):
@@ -235,18 +306,21 @@ if __name__ == "__main__":
 
         args_pose["model_path"] = YOLO_MODEL_PATH
         args_pose["input_video_path"] = VIDEO_PATH
-        args_pose["output_dir"] = OUTPUT_DIR
+        args_pose["output_dir"] = OUTPUT_DIR_POSE
         args_pose["device"] = fr"cuda:{VALID_GPU_ID}"
         args_pose["kpt_thr"] = 0.3
         args_pose["kpts_colors"] = COCO_KPTS_COLORS
         args_pose["skeleton_info"] = COCO_SKELETON_INFO
-        out_pose = yolo_main(args_pose)
+        args_pose['n_keypoints'] = N_KEYPOINTS
+        args_pose['save_frames'] = SAVE_FRAMES
+        args_pose['skip_frames'] = SKIP_FRAMES
+        out_pose = predict_YOLO11_pose_mod.yolo_main(args_pose)
         
         total_time = out_pose['total_time']
         resulting_kpts = out_pose['resulting_kpts']
     
         print('Total time:', total_time)
-        print('Total images:', len(os.listdir(OUTPUT_DIR)) / 2)
+        print('Total images:', len(os.listdir(OUTPUT_DIR_POSE)) / 2)
     
         
     else:
@@ -261,11 +335,11 @@ if __name__ == "__main__":
                     instance_info = data.get('instance_info', {})
                     keypoints = instance_info[0]['keypoints']
                     
-                resulting_kpts.append(np.array(keypoints))
-                
+                resulting_kpts.append(np.array(keypoints[0:N_KEYPOINTS], dtype=np.float32))
+                      
     resulting_kpts = np.array(resulting_kpts)
-    resulting_kpts.reshape(-1, 17, 2)
-                  
+    resulting_kpts = resulting_kpts.reshape(-1, N_KEYPOINTS, 2)
+        
     args_lstm = {}
       
     args_lstm['keypoints'] = resulting_kpts
@@ -275,8 +349,16 @@ if __name__ == "__main__":
     args_lstm["n_keypoints"] = N_KEYPOINTS
     args_lstm["model_path"] = LSTM_MODEL_PATH
 
-    pred_label, probs = lstm_main(args_lstm)
+    pred_label, probs = predict_LSTM_mod.lstm_main(args_lstm)
     
+    args_homography = {}
+    
+    args_homography['keypoints'] = resulting_kpts
+    args_homography['class_name'] = pred_label
+    args_homography['img_shape'] = images[0].shape[:2]
+
+    corrected_kpts = affine_2D_mod.homography_main(args_homography)
+
     # print('probs:', probs)
     
     cls_idx = CLASSES.index(pred_label)
@@ -299,21 +381,19 @@ if __name__ == "__main__":
         kpts_dict['right_wrist'] = frame_kpts[10]
         kpts_dict['left_hip'] = frame_kpts[11]
         kpts_dict['right_hip'] = frame_kpts[12]
-        kpts_dict['left_knee'] = frame_kpts[13]
-        kpts_dict['right_knee'] = frame_kpts[14]
-        kpts_dict['left_ankle'] = frame_kpts[15]
-        kpts_dict['right_ankle'] = frame_kpts[16]
+        # kpts_dict['left_knee'] = frame_kpts[13]
+        # kpts_dict['right_knee'] = frame_kpts[14]
+        # kpts_dict['left_ankle'] = frame_kpts[15]
+        # kpts_dict['right_ankle'] = frame_kpts[16]
 
         kpts_dict_list.append(kpts_dict)
-    
-    print(len(kpts_dict_list))
     
     match(cls_idx):
         case 0:
             print('Predicted exercise: Bench Press')
             
             time_labels = repcount_bench_press(kpts_dict_list)
-            print(time_labels)
+            print('RepCount:', time_labels)
             
         case 1:
             print('Predicted exercise: Deadlift')
@@ -332,3 +412,27 @@ if __name__ == "__main__":
             
         case _:
             print('Error: Unknown class index')
+            
+    counter_images = []
+    count = 0
+    i = 0
+
+    print('LEN KPTS:', len(resulting_kpts))
+
+    for img, kps in zip(images, resulting_kpts):
+        
+        drawn_img = draw_keypoints(img.copy(), kps, COCO_KPTS_COLORS, COCO_SKELETON_INFO)
+        
+        if i in time_labels:
+            count += 1
+        
+        counter_img = draw_counter(drawn_img, count)
+
+        counter_images.append(counter_img)
+        
+    if not os.path.exists(os.path.dirname(OUTPUT_DIR_VIDEO)):
+        os.makedirs(os.path.dirname(OUTPUT_DIR_VIDEO))
+    
+        
+    save_video(counter_images, OUTPUT_DIR_VIDEO, fps=fps_og/SKIP_FRAMES)
+    print('Saved output at:', OUTPUT_DIR_VIDEO)

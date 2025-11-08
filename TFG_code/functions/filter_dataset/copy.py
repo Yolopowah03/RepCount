@@ -2,7 +2,7 @@ import os
 import shutil
 
 # Ruta base donde están las subcarpetas
-base_dir = "/datatmp2/joan/tfg_joan/LSTM_dataset/train/labels/pull_up"
+base_dir = "/datatmp2/joan/tfg_joan/LSTM_dataset/train/images/pull_up"
 
 # Carpeta de destino donde se copiarán las primeras imágenes
 output_dir = "/datatmp2/joan/tfg_joan/images/pull_up"

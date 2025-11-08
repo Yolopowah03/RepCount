@@ -7,15 +7,15 @@ import os
 
 CLASSES = ['bench_press', 'deadlift', 'squat', 'pull_up']
 
-N_KEYPOINTS = 17
+N_KEYPOINTS = 13
 VEL = True
 SEQ_LEN = 50
 
-MODEL_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_RepCount2.pth'
+MODEL_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_RepCount3.pth'
 PREDICT_DIR = '/datatmp2/joan/tfg_joan/LSTM_dataset/test/labels'
 
 class LSTMClassifier(nn.Module):
-    def __init__(self, input_size=68, hidden_size=256, num_layers=2, num_classes=4, dropout=0.4, num_directions=1):
+    def __init__(self, input_size=52, hidden_size=256, num_layers=2, num_classes=4, dropout=0.4, num_directions=1):
         super().__init__()
         self.lstm = nn.LSTM(input_size, hidden_size, num_layers=num_layers,
                             batch_first=True, dropout=dropout, bidirectional=False)
@@ -172,8 +172,11 @@ if __name__ == "__main__":
                             instance_info = data.get('instance_info', {})
                             
                             keypoints = instance_info[0]['keypoints']
+                            
+                            #Filtrar cames
+                            keypoints = [keypoints[i] for i in range(len(keypoints)) if i not in [13,14,15,16]]
 
-                        video_list.append(np.array(keypoints).reshape(-1, 17, 2))
+                        video_list.append(np.array(keypoints).reshape(-1, 13, 2))
             if len(video_list) > 0:     
                 pred_label, probs = predict_video(np.vstack(video_list), model, device, seq_len=SEQ_LEN, class_names=CLASSES)
                 print(f"Video: {file_path}, True: {class_name}, Pred: {pred_label}, Probs: {probs}")
