@@ -5,49 +5,46 @@ import json
 import numpy as np
 import math
 import importlib
-import inspect
+import time
+
+time_count = time.time()
 
 PYTHON_LSTM_PATH = '/datatmp2/joan/tfg_joan/TFG_code/LSTM'
-sys.path.append(PYTHON_LSTM_PATH)
 PYTHON_YOLO_PATH = '/datatmp2/joan/tfg_joan/TFG_code/YOLO_pose'
-sys.path.append(PYTHON_YOLO_PATH)
 PYTHON_HOMOGRAPHY_PATH = '/datatmp2/joan/tfg_joan/TFG_code/Homography'
-sys.path.append(PYTHON_HOMOGRAPHY_PATH)
 
-if 'predict_LSTM_mod' in sys.modules:
-    del sys.modules['predict_LSTM_mod']
-    
-if 'predict_YOLO11_pose_mod' in sys.modules:
-    del sys.modules['predict_YOLO11_pose_mod']
-    
-if 'affine_2D_mod' in sys.modules:
-    del sys.modules['affine_2D_mod']
-    
+for p in (PYTHON_LSTM_PATH, PYTHON_YOLO_PATH, PYTHON_HOMOGRAPHY_PATH):
+    if p not in sys.path:
+        sys.path.append(p)
+        
+importlib.invalidate_caches()
+
 import predict_LSTM_mod # type: ignore
-import predict_YOLO11_pose_mod # type: ignore
-import affine_2D_mod # type: ignore
+import predict_YOLO11_mod # type: ignore
+import homography_mod # type: ignore
 
-print(f"El archivo que Python está cargando es: {inspect.getfile(predict_LSTM_mod)}")
-print(f"El archivo que Python está cargando es: {inspect.getfile(predict_YOLO11_pose_mod)}")
-print(f"El archivo que Python está cargando es: {inspect.getfile(affine_2D_mod)}")
+importlib.reload(predict_LSTM_mod)
+importlib.reload(predict_YOLO11_mod)
+importlib.reload(homography_mod)
 
-
-VIDEO_PATH = '/datatmp2/joan/tfg_joan/videos/test/bench_press/bench_press_2.mp4'
-OUTPUT_DIR_POSE = "/datatmp2/joan/tfg_joan/results/YOLO_pose/repcount_bench_press2"
-OUTPUT_DIR_VIDEO = "/datatmp2/joan/tfg_joan/results/repCount/repcount_bench_press2.mp4"
+VIDEO_PATH = '/datatmp2/joan/tfg_joan/videos/train/bench_press/train_bench_press_052.mp4'
+OUTPUT_DIR_POSE = "/datatmp2/joan/tfg_joan/videos/test/bench_press/bench_press_train_52"
+OUTPUT_DIR_VIDEO = "/datatmp2/joan/tfg_joan/results/repCount/repcount_bench_press_train_52.mp4"
 
 CLASSES = ['bench_press', 'deadlift', 'squat', 'pull_up']
 N_KEYPOINTS = 13
-SKIP_FRAMES = 2
+SKIP_FRAMES = 1
+FPS_REDUCTION = 2
 
 # PRE_LOADED_JSON_DIR = '/datatmp2/joan/tfg_joan/results/repcount'
-PRE_LOADED_JSON_DIR = '/datatmp2/joan/tfg_joan/results/YOLO_pose/repcount_bench_press1'
+PRE_LOADED_JSON_DIR = '/datatmp2/joan/tfg_joan/results/YOLO_pose/repcount_bench_press11'
 
 #YOLO
 YOLO_MODEL_PATH='/datatmp2/joan/tfg_joan/models_YOLO11_pose/yolo11m-pose.pt'
 VALID_GPU_ID = 3
 SAVE_FRAMES = False
 SAVE_JSON = False
+MIN_CONF = 0.15
 
 #LSTM 
 LSTM_MODEL_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_13_RepCount1.pth'
@@ -84,9 +81,9 @@ COCO_SKELETON_INFO = {
     2: dict(link=(6, 12), id=6, color=[51, 153, 255]),
     3: dict(link=(5, 6), id=7, color=[51, 153, 255]),
     4: dict(link=(5, 7), id=8, color=[0, 255, 0]),
-    5: dict(link=(6, 8), id=9, color=[255, 128, 0]),
+    5: dict(link=(6, 8), id=9, color=[0, 255, 0]),
     6: dict(link=(7, 9), id=10, color=[0, 255, 0]),
-    7: dict(link=(8, 10), id=11, color=[255, 128, 0]),
+    7: dict(link=(8, 10), id=11, color=[0, 255, 0]),
     8: dict(link=(1, 2), id=12, color=[51, 153, 255]),
     9: dict(link=(0, 1), id=13, color=[51, 153, 255]),
     10: dict(link=(0, 2), id=14, color=[51, 153, 255]),
@@ -125,6 +122,9 @@ def extract_images_from_video(video_path, skip_frames):
     fps_og = cap1.get(cv.CAP_PROP_FPS)
     
     success, frame = cap1.read()
+    
+    if not success:
+        raise ValueError('Error reading video file at path:', video_path)
 
     while success:
 
@@ -164,14 +164,14 @@ def draw_keypoints(image, kpts, kpt_colors, skeleton_info, kpt_thr=0.3, radius=3
     return image
 
 def draw_counter(image, count):
-    font = cv.FONT_HERSHEY_SIMPLEX
-    bottomLeftCornerOfText = (50, 50)
-    fontScale = 1
-    fontColor = (0, 255, 0)
-    lineType = 2
+    font = cv.FONT_HERSHEY_DUPLEX
+    text_position = (100, 100)
+    fontScale = 2
+    fontColor = (255, 0, 0)
+    lineType = 3
 
     cv.putText(image, f'Rep Count: {count}', 
-        bottomLeftCornerOfText, 
+        text_position, 
         font, 
         fontScale,
         fontColor,
@@ -231,7 +231,7 @@ def repcount_bench_press(keypoints):
             timestamps_initial.append(i)
             
         else:
-            if extended_arm_dist > initialPosition['extended_arm_dist']:
+            if extended_arm_dist > initialPosition['extended_arm_dist'] and end_rep == False:
                 initialPosition['extended_arm_dist'] = extended_arm_dist
                 initialPosition['frame'] = i
                 end_rep = False
@@ -241,17 +241,20 @@ def repcount_bench_press(keypoints):
                 
             if initialPosition is not None:
                 #Trobar quan es retorna a la posició inicial
-                if extended_arm_dist >= (initialPosition['extended_arm_dist'] * 0.9):
+                if extended_arm_dist >= (initialPosition['extended_arm_dist'] * 0.85):
                     initialPosition['frame'] = i
+                    if end_rep == True:
+                        timestamps.append(i)
+                        
                     end_rep = False
-                    
+
                 # print('Extended arm dist:')
                 # print(extended_arm_dist)
                     
                 #Trobar fi de repetició
-                if end_rep == False and extended_arm_dist <= (initialPosition['extended_arm_dist'] * 0.5):
+                
+                if end_rep == False and extended_arm_dist <= (initialPosition['extended_arm_dist'] * 0.65):
                     end_rep = True
-                    timestamps.append(i)
                     
     # print('timestamps_initial', timestamps_initial)
     return timestamps
@@ -291,7 +294,6 @@ def save_video(image_list, output_path, fps):
 
 if __name__ == "__main__":
     images, fps_og = extract_images_from_video(VIDEO_PATH, SKIP_FRAMES)
-    print('EXTRACTED IMAGES:', len(images))
 
     pre_loaded = False
 
@@ -312,16 +314,14 @@ if __name__ == "__main__":
         args_pose["kpts_colors"] = COCO_KPTS_COLORS
         args_pose["skeleton_info"] = COCO_SKELETON_INFO
         args_pose['n_keypoints'] = N_KEYPOINTS
+        args_pose['save_json'] = SAVE_JSON
         args_pose['save_frames'] = SAVE_FRAMES
         args_pose['skip_frames'] = SKIP_FRAMES
-        out_pose = predict_YOLO11_pose_mod.yolo_main(args_pose)
+        args_pose['min_conf'] = MIN_CONF
+        out_pose = predict_YOLO11_mod.yolo_mod(args_pose)
         
-        total_time = out_pose['total_time']
+        total_time_pose = out_pose['total_time']
         resulting_kpts = out_pose['resulting_kpts']
-    
-        print('Total time:', total_time)
-        print('Total images:', len(os.listdir(OUTPUT_DIR_POSE)) / 2)
-    
         
     else:
         resulting_kpts = []
@@ -339,7 +339,7 @@ if __name__ == "__main__":
                       
     resulting_kpts = np.array(resulting_kpts)
     resulting_kpts = resulting_kpts.reshape(-1, N_KEYPOINTS, 2)
-        
+    
     args_lstm = {}
       
     args_lstm['keypoints'] = resulting_kpts
@@ -357,14 +357,14 @@ if __name__ == "__main__":
     args_homography['class_name'] = pred_label
     args_homography['img_shape'] = images[0].shape[:2]
 
-    corrected_kpts = affine_2D_mod.homography_main(args_homography)
+    corrected_kpts, reference_kp_distr, indices = homography_mod.homography_main(args_homography)
 
     # print('probs:', probs)
     
     cls_idx = CLASSES.index(pred_label)
     
     kpts_dict_list = []
-    for frame_kpts in resulting_kpts:
+    for frame_kpts in corrected_kpts:
         
         kpts_dict = {}
 
@@ -416,23 +416,37 @@ if __name__ == "__main__":
     counter_images = []
     count = 0
     i = 0
+    
+    print('Total frames to process for rep counting:', len(images), len(resulting_kpts), len(corrected_kpts))
 
-    print('LEN KPTS:', len(resulting_kpts))
-
-    for img, kps in zip(images, resulting_kpts):
+    for img, kps, warped_kpts in zip(images, resulting_kpts, corrected_kpts):
         
         drawn_img = draw_keypoints(img.copy(), kps, COCO_KPTS_COLORS, COCO_SKELETON_INFO)
-        
-        if i in time_labels:
-            count += 1
-        
         counter_img = draw_counter(drawn_img, count)
+        i += 1
 
+        if (kps == 0).all():
+            counter_images.append(counter_img)
+            continue
+    
+        for ref_kp in reference_kp_distr:
+            counter_img = cv.circle(counter_img, (int(ref_kp[0]), int(ref_kp[1])), 5, (255, 0, 0), -1)
+            
+        for j, warped in enumerate(warped_kpts):
+            if j in indices:
+                counter_img = cv.circle(counter_img, (int(warped[0]), int(warped[1])), 3, (0, 0, 255), -1)
+    
+        if time_labels is not None and i in time_labels:
+            count += 1
+            
         counter_images.append(counter_img)
         
     if not os.path.exists(os.path.dirname(OUTPUT_DIR_VIDEO)):
         os.makedirs(os.path.dirname(OUTPUT_DIR_VIDEO))
     
-        
-    save_video(counter_images, OUTPUT_DIR_VIDEO, fps=fps_og/SKIP_FRAMES)
+    print('Total processed frames:', len(counter_images))
+    save_video(counter_images, OUTPUT_DIR_VIDEO, fps=fps_og/(SKIP_FRAMES*FPS_REDUCTION))
     print('Saved output at:', OUTPUT_DIR_VIDEO)
+    
+    print('Total time pose estimation:', np.round(total_time_pose, 3), ' seconds')
+    print('Total time:', np.round(time.time() - time_count, 3), ' seconds')

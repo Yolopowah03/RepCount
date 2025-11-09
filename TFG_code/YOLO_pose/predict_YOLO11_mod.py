@@ -5,10 +5,13 @@ import numpy as np
 import json
 import time
 
+import warnings
+
+warnings.filterwarnings("ignore", category=UserWarning)
+
 def draw_keypoints(image, kpts, kpt_colors, skeleton_info, kpt_thr=0.3, radius=3, thickness=2):
     
     for kid, kpt in sorted(enumerate(kpts)):
-        # print(kpt)
 
         color = kpt_colors[kid]
         if not isinstance(color, str):
@@ -47,11 +50,10 @@ def save_json(keypoints, scores, output_path, kpt_colors, kpt_thr,):
             indent="\t",
         )
 
-def yolo_main(args):
+def yolo_mod(args):
     
     begin_time = time.time()
     
-    print('LOADING MODEL')
     model = YOLO(args['model_path'])
     
     cap = cv.VideoCapture(args['input_video_path'])
@@ -60,8 +62,6 @@ def yolo_main(args):
     i = 0
     total_resulting_kpts = []
     while success:
-        print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
-        print(args['skip_frames'])
 
         if i % args['skip_frames'] != 1:
             file = f"{os.path.splitext(os.path.basename(args['input_video_path']))[0]}_frame_{i:06d}.jpg"
@@ -69,21 +69,39 @@ def yolo_main(args):
             save_path = os.path.join(args['output_dir'], file)
             save_path_json = save_path.replace(".jpg", ".json").replace(".png", ".json")
             
-            results = model(frame)  # predict on an image
+            results = model(frame, verbose=False)  # predict on an image
             
-            max_score = 0
+            max_area = 0.0
+            max_score = 0.0
+            
             for result in results:
                 
-                kpts = result.keypoints.xy  # x and y coordinates
-                scores = result.keypoints.conf  # confidence scores
-                kpts = kpts.cpu()
-                scores = scores.cpu()
-                mean_score = np.mean(scores.tolist())
-                
-                if mean_score >= max_score:
-                    resulting_kpts = np.asarray(kpts, dtype=np.float32)
-                    resulting_scores = scores.tolist()
-                    max_score = mean_score
+                if result.boxes and len(result.boxes) > 0:
+                    xywh = result.boxes.xywh.cpu().numpy().squeeze()
+                    if len(xywh.shape) == 1:
+                        area = xywh[2] * xywh[3]
+                    elif len(xywh.shape) > 1:
+                        area = max(xywh[:, 2] * xywh[:, 3])
+                        result = result[np.argmax(xywh[:, 2] * xywh[:, 3])]
+                    
+                    if area > max_area:
+                        kpts = result.keypoints.xy
+                        scores = result.keypoints.conf
+                        
+                        kpts = kpts.cpu()
+                        scores = scores.cpu()
+
+                        resulting_kpts = np.asarray(kpts, dtype=np.float32)
+                        resulting_scores = scores.tolist()
+                        max_area = area
+                        
+                        score = np.mean([s for s in resulting_scores if s is not None])
+                        max_score = score
+                    
+                if max_score < args['min_conf']:
+                    print('No keypoints detected in frame, skipping', i)
+                    resulting_kpts = np.zeros((1, args['n_keypoints'], 2), dtype=np.float32)
+                    resulting_scores = [0.0 for _ in range(args['n_keypoints'])]
         
             save_img = draw_keypoints(frame, resulting_kpts[0], args['kpts_colors'], args['skeleton_info'])
             
@@ -98,8 +116,6 @@ def yolo_main(args):
                 cv.imwrite(save_path, save_img)
             
             total_resulting_kpts.append(resulting_kpts[0][0:args['n_keypoints']])
-        else:
-            print(f"Skipping frame {i}")
         
         i += 1
         success, frame = cap.read()
