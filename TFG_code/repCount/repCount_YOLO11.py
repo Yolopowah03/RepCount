@@ -27,14 +27,15 @@ importlib.reload(predict_LSTM_mod)
 importlib.reload(predict_YOLO11_mod)
 importlib.reload(homography_mod)
 
-VIDEO_PATH = '/datatmp2/joan/tfg_joan/videos/train/bench_press/train_bench_press_052.mp4'
-OUTPUT_DIR_POSE = "/datatmp2/joan/tfg_joan/videos/test/bench_press/bench_press_train_52"
-OUTPUT_DIR_VIDEO = "/datatmp2/joan/tfg_joan/results/repCount/repcount_bench_press_train_52.mp4"
+VIDEO_PATH = '/datatmp2/joan/tfg_joan/videos/train/squat/train_squat_010.mp4'
+OUTPUT_DIR_POSE = "/datatmp2/joan/tfg_joan/videos/test/squat/squat_train_010"
+OUTPUT_DIR_VIDEO = "/datatmp2/joan/tfg_joan/results/repCount/repcount_squat_train_010.mp4"
 
 CLASSES = ['bench_press', 'deadlift', 'squat', 'pull_up']
-N_KEYPOINTS = 13
+N_KEYPOINTS_TOTAL = 17
+N_KEYPOINTS_SHORTENED = 13
 SKIP_FRAMES = 1
-FPS_REDUCTION = 2
+FPS_REDUCTION = 1
 
 # PRE_LOADED_JSON_DIR = '/datatmp2/joan/tfg_joan/results/repcount'
 PRE_LOADED_JSON_DIR = '/datatmp2/joan/tfg_joan/results/YOLO_pose/repcount_bench_press11'
@@ -47,7 +48,7 @@ SAVE_JSON = False
 MIN_CONF = 0.15
 
 #LSTM 
-LSTM_MODEL_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_13_RepCount1.pth'
+LSTM_MODEL_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_17_RepCount2.pth'
 VEL = True
 SEQ_LEN = 80
 
@@ -71,11 +72,29 @@ COCO_KPTS_COLORS = [
     [255, 128, 0],    # 16: right_ankle
 ]
 
-COCO_SKELETON_INFO = {
-    # 0: dict(link=(15, 13), id=0, color=[0, 255, 0]),
-    # 1: dict(link=(13, 11), id=1, color=[0, 255, 0]),
-    # 2: dict(link=(16, 14), id=2, color=[255, 128, 0]),
-    # 3: dict(link=(14, 12), id=3, color=[255, 128, 0]),
+COCO_SKELETON_INFO_17 = {
+    0: dict(link=(15, 13), id=0, color=[0, 255, 0]),
+    1: dict(link=(13, 11), id=1, color=[0, 255, 0]),
+    2: dict(link=(16, 14), id=2, color=[255, 128, 0]),
+    3: dict(link=(14, 12), id=3, color=[255, 128, 0]),
+    4: dict(link=(11, 12), id=4, color=[51, 153, 255]),
+    5: dict(link=(5, 11), id=5, color=[51, 153, 255]),
+    6: dict(link=(6, 12), id=6, color=[51, 153, 255]),
+    7: dict(link=(5, 6), id=7, color=[51, 153, 255]),
+    8: dict(link=(5, 7), id=8, color=[0, 255, 0]),
+    9: dict(link=(6, 8), id=9, color=[0, 255, 0]),
+    10: dict(link=(7, 9), id=10, color=[0, 255, 0]),
+    11: dict(link=(8, 10), id=11, color=[0, 255, 0]),
+    12: dict(link=(1, 2), id=12, color=[51, 153, 255]),
+    13: dict(link=(0, 1), id=13, color=[51, 153, 255]),
+    14: dict(link=(0, 2), id=14, color=[51, 153, 255]),
+    15: dict(link=(1, 3), id=15, color=[51, 153, 255]),
+    16: dict(link=(2, 4), id=16, color=[51, 153, 255]),
+    17: dict(link=(3, 5), id=17, color=[51, 153, 255]),
+    18: dict(link=(4, 6), id=18, color=[51, 153, 255])
+}
+
+COCO_SKELETON_INFO_13 = {
     0: dict(link=(11, 12), id=4, color=[51, 153, 255]),
     1: dict(link=(5, 11), id=5, color=[51, 153, 255]),
     2: dict(link=(6, 12), id=6, color=[51, 153, 255]),
@@ -199,85 +218,281 @@ def get_angle(x0, y0, x1, y1, x2, y2):
     return theta_deg
 
 def repcount_bench_press(keypoints):
-    
-    # 1: Distancia entre manos (9, 10) y hombros (5, 6) (brazos extendidos)
-    # 2: Ángulo perpendicular entre hombros (5, 6), codos (7, 8) y muñecas (9, 10) (brazos flexionados) + Distancia 1 en un 20%
-    # 3: Retorno a la posicion inicial, a un 90% mínimo de distancia inicial (brazos extendidos)
+
+    #PLA: Canells, espatlles
     
     timestamps = []
     timestamps_initial = []
     initialPosition = None
     end_rep = False
+    timer = 0
+    dist_array = []
     
     for i, frame_keypoints in enumerate(keypoints):
         
-        if i % 2:
+        if (i % SKIP_FRAMES) == 1:
             continue
+        
+        if timer > 0:
+            timer = timer - 1
 
-        hand_vector = (frame_keypoints['left_wrist'][0]-frame_keypoints['right_wrist'][0], frame_keypoints['left_wrist'][1] - frame_keypoints['right_wrist'][1])
-        extended_arm_distL = np.sqrt((frame_keypoints['left_wrist'][0]-frame_keypoints['left_shoulder'][0])**2 + (frame_keypoints['left_wrist'][1]-frame_keypoints['left_shoulder'][1])**2)
-        extended_arm_distR = np.sqrt((frame_keypoints['right_wrist'][0]-frame_keypoints['right_shoulder'][0])**2 + (frame_keypoints['right_wrist'][1]-frame_keypoints['right_shoulder'][1])**2)
-        extended_arm_dist = (extended_arm_distL + extended_arm_distR) / 2
+        wrist_shoulder_distL = np.sqrt((frame_keypoints['left_wrist'][0]-frame_keypoints['left_shoulder'][0])**2 + (frame_keypoints['left_wrist'][1]-frame_keypoints['left_shoulder'][1])**2)
+        wrist_shoulder_distR = np.sqrt((frame_keypoints['right_wrist'][0]-frame_keypoints['right_shoulder'][0])**2 + (frame_keypoints['right_wrist'][1]-frame_keypoints['right_shoulder'][1])**2)
+        wrist_shoulder_dist = (wrist_shoulder_distL + wrist_shoulder_distR) / 2
         
-        # Trobar InitialPosition i actualitzar-la si es troben millors posicions
+        if len(dist_array) < 5:
+            dist_array.append(wrist_shoulder_dist)
+        elif wrist_shoulder_dist < (max(dist_array)*1.1):
+            dist_array.append(wrist_shoulder_dist)
+        else:
+            continue
         
+        # Trobar primera InitialPosition 
         if initialPosition is None:
             initialPosition = {}
             initialPosition['frame'] = i
-            initialPosition['extended_arm_dist'] = extended_arm_dist
-            end_rep = False
+            initialPosition['wrist_shoulder_dist'] = wrist_shoulder_dist
             # print('Initial Position arm_dist:')
             # print(initialPosition)
             timestamps_initial.append(i)
             
         else:
-            if extended_arm_dist > initialPosition['extended_arm_dist'] and end_rep == False:
-                initialPosition['extended_arm_dist'] = extended_arm_dist
+           # Actualitzar initial positions si es troben millors
+            if wrist_shoulder_dist > initialPosition['wrist_shoulder_dist'] and end_rep == False:
                 initialPosition['frame'] = i
-                end_rep = False
+                initialPosition['wrist_shoulder_dist'] = wrist_shoulder_dist
                 # print('Initial Position:')
                 # print(initialPosition)
                 timestamps_initial.append(i)
                 
-            if initialPosition is not None:
-                #Trobar quan es retorna a la posició inicial
-                if extended_arm_dist >= (initialPosition['extended_arm_dist'] * 0.85):
-                    initialPosition['frame'] = i
-                    if end_rep == True:
+            #Trobar quan es retorna a la posició inicial
+            if wrist_shoulder_dist >= (initialPosition['wrist_shoulder_dist'] * 0.9):
+                initialPosition['frame'] = i
+                if end_rep == True:
+                    if timer <= 0 and i > 30:
                         timestamps.append(i)
-                        
-                    end_rep = False
-
-                # print('Extended arm dist:')
-                # print(extended_arm_dist)
+                        timer += 15
                     
-                #Trobar fi de repetició
+                end_rep = False
+
+            # print('Extended arm dist:')
+            # print(wrist_shoulder_dist)
                 
-                if end_rep == False and extended_arm_dist <= (initialPosition['extended_arm_dist'] * 0.65):
-                    end_rep = True
+            #Trobar fi de repetició
+            
+            if end_rep == False and wrist_shoulder_dist <= (initialPosition['wrist_shoulder_dist'] * 0.65):
+                end_rep = True
                     
     # print('timestamps_initial', timestamps_initial)
     return timestamps
     
 def repcount_deadlift(keypoints):
+
+    #PLA: Mans, peus
     
-    # 1: 
-    # 2: 
+    timestamps = []
+    timestamps_initial = []
+    initialPosition = None
+    end_rep = False
+    timer = 0
+    dist_array= []
     
-    # return timestamps
-    pass
+    for i, frame_keypoints in enumerate(keypoints):
+        
+        if (i % SKIP_FRAMES) == 1:
+            continue
+        
+        if timer > 0:
+            timer = timer - 1
+        
+        wrist_ankle_distL = np.sqrt((frame_keypoints['left_wrist'][0]-frame_keypoints['left_ankle'][0])**2 + (frame_keypoints['left_wrist'][1]-frame_keypoints['left_ankle'][1])**2)
+        wrist_ankle_distR = np.sqrt((frame_keypoints['right_wrist'][0]-frame_keypoints['right_ankle'][0])**2 + (frame_keypoints['right_wrist'][1]-frame_keypoints['right_ankle'][1])**2)
+        wrist_ankle_dist = (wrist_ankle_distL + wrist_ankle_distR) / 2
+        
+        if len(dist_array) < 5:
+            dist_array.append(wrist_ankle_dist)
+        elif wrist_ankle_dist > (min(dist_array)*0.8):
+            dist_array.append(wrist_ankle_dist)
+        else:
+            continue
+        
+        # Trobar primera InitialPosition 
+        if initialPosition is None:
+            initialPosition = {}
+            initialPosition['frame'] = i
+            initialPosition['wrist_ankle_dist'] = wrist_ankle_dist
+            # print('Initial Position arm_dist:')
+            # print(initialPosition)
+            timestamps_initial.append(i)
+            
+        else: 
+            # Actualitzar initial positions si es troben millors
+            if wrist_ankle_dist < initialPosition['wrist_ankle_dist'] and end_rep == False:
+                initialPosition['frame'] = i
+                initialPosition['wrist_ankle_dist'] = wrist_ankle_dist
+                print('Initial Position:')
+                print(initialPosition)
+                timestamps_initial.append(i)
+                
+            #Trobar quan es retorna a la posició inicial
+            if wrist_ankle_dist <= (initialPosition['wrist_ankle_dist'] * 1.15):
+                initialPosition['frame'] = i
+                if end_rep == True:
+                    if timer <= 0 and i > 30:
+                        timestamps.append(i)
+                        timer += 15
+                    
+                end_rep = False
+
+            # print('Wrist-hip dist:')
+            # print(wrist_hip_dist)
+                
+            #Trobar fi de repetició
+            
+            if end_rep == False and wrist_ankle_dist >= (initialPosition['wrist_ankle_dist'] * 1.4):
+                end_rep = True
+                    
+    # print('timestamps_initial', timestamps_initial)
+    return timestamps
     
 def repcount_squat(keypoints):
-    # return timestamps
-    pass
+    
+    #PLA: Espatlles, genolls
+    
+    timestamps = []
+    timestamps_initial = []
+    initialPosition = None
+    end_rep = False
+    timer = 0
+    dist_array = []
+    
+    for i, frame_keypoints in enumerate(keypoints):
+        
+        if (i % SKIP_FRAMES) == 1:
+            continue
+        
+        if timer > 0:
+            timer = timer - 1
+
+        knee_shoulder_distL = np.sqrt((frame_keypoints['left_knee'][0]-frame_keypoints['left_shoulder'][0])**2 + (frame_keypoints['left_knee'][1]-frame_keypoints['left_shoulder'][1])**2)
+        knee_shoulder_distR = np.sqrt((frame_keypoints['right_knee'][0]-frame_keypoints['right_shoulder'][0])**2 + (frame_keypoints['right_knee'][1]-frame_keypoints['right_shoulder'][1])**2)
+        knee_shoulder_dist = (knee_shoulder_distL + knee_shoulder_distR) / 2
+        
+        if len(dist_array) < 5:
+            dist_array.append(knee_shoulder_dist)
+        elif knee_shoulder_dist < (max(dist_array)*1.1):
+            dist_array.append(knee_shoulder_dist)
+        else:
+            continue
+        
+        # Trobar primera InitialPosition 
+        if initialPosition is None:
+            initialPosition = {}
+            initialPosition['frame'] = i
+            initialPosition['knee_shoulder_dist'] = knee_shoulder_dist
+            # print('Initial Position arm_dist:')
+            # print(initialPosition)
+            timestamps_initial.append(i)
+            
+        else:
+           # Actualitzar initial positions si es troben millors
+            if knee_shoulder_dist > initialPosition['knee_shoulder_dist'] and end_rep == False:
+                initialPosition['frame'] = i
+                initialPosition['knee_shoulder_dist'] = knee_shoulder_dist
+                print('Initial Position:')
+                print(initialPosition)
+                timestamps_initial.append(i)
+                
+            #Trobar quan es retorna a la posició inicial
+            if knee_shoulder_dist >= (initialPosition['knee_shoulder_dist'] * 0.875):
+                initialPosition['frame'] = i
+                if end_rep == True:
+                    if timer <= 0 and i > 30:
+                        timestamps.append(i)
+                        timer += 15
+                    
+                end_rep = False
+
+            # print('Extended arm dist:')
+            # print(wrist_shoulder_dist)
+                
+            #Trobar fi de repetició
+            
+            if end_rep == False and knee_shoulder_dist <= (initialPosition['knee_shoulder_dist'] * 0.75):
+                end_rep = True
+                    
+    # print('timestamps_initial', timestamps_initial)
+    return timestamps
 
 def repcount_pull_up(keypoints):
-    # 1: Distancia entre manos y hombros (brazos extendidos)
-    # 2: Punto medio entre linea orejas y linea hombros pasa linea manos (brazos flexionados)
-    # 3: Retorno a la posicion inicial, a un 90% mínimo de distancia inicial (brazos extendidos)
     
-    # return timestamps
-    pass
+    #PLA: Canells, espatlles
+    
+    timestamps = []
+    timestamps_initial = []
+    initialPosition = None
+    end_rep = False
+    timer = 0
+    dist_array = []
+    
+    for i, frame_keypoints in enumerate(keypoints):
+        
+        if (i % SKIP_FRAMES) == 1:
+            continue
+        
+        if timer > 0:
+            timer = timer - 1
+
+        wrist_shoulder_distL = np.sqrt((frame_keypoints['left_wrist'][0]-frame_keypoints['left_shoulder'][0])**2 + (frame_keypoints['left_wrist'][1]-frame_keypoints['left_shoulder'][1])**2)
+        wrist_shoulder_distR = np.sqrt((frame_keypoints['right_wrist'][0]-frame_keypoints['right_shoulder'][0])**2 + (frame_keypoints['right_wrist'][1]-frame_keypoints['right_shoulder'][1])**2)
+        wrist_shoulder_dist = (wrist_shoulder_distL + wrist_shoulder_distR) / 2
+        
+        if len(dist_array) < 5:
+            dist_array.append(wrist_shoulder_dist)
+        elif wrist_shoulder_dist < (max(dist_array)*1.2):
+            dist_array.append(wrist_shoulder_dist)
+        else:
+            continue
+        
+        # Trobar primera InitialPosition 
+        if initialPosition is None:
+            initialPosition = {}
+            initialPosition['frame'] = i
+            initialPosition['wrist_shoulder_dist'] = wrist_shoulder_dist
+            # print('Initial Position arm_dist:')
+            # print(initialPosition)
+            timestamps_initial.append(i)
+            
+        else:
+           # Actualitzar initial positions si es troben millors
+            if wrist_shoulder_dist > initialPosition['wrist_shoulder_dist'] and end_rep == False:
+                initialPosition['frame'] = i
+                initialPosition['wrist_shoulder_dist'] = wrist_shoulder_dist
+                # print('Initial Position dist:')
+                # print(wrist_shoulder_dist)
+                timestamps_initial.append(i)
+                
+                
+            #Trobar quan es retorna a la posició inicial
+            if wrist_shoulder_dist >= (initialPosition['wrist_shoulder_dist'] * 0.9):
+                initialPosition['frame'] = i
+                if end_rep == True:
+                    if timer <= 0 and i > 30:
+                        timestamps.append(i)
+                        timer += 15
+                    
+                end_rep = False
+
+            # print('Extended arm dist:')
+            # print(wrist_shoulder_dist)
+                
+            #Trobar fi de repetició
+            
+            if end_rep == False and wrist_shoulder_dist <= (initialPosition['wrist_shoulder_dist'] * 0.65):
+                end_rep = True
+                    
+    # print('timestamps_initial', timestamps_initial)
+    return timestamps
 
 def save_video(image_list, output_path, fps):
     
@@ -312,8 +527,8 @@ if __name__ == "__main__":
         args_pose["device"] = fr"cuda:{VALID_GPU_ID}"
         args_pose["kpt_thr"] = 0.3
         args_pose["kpts_colors"] = COCO_KPTS_COLORS
-        args_pose["skeleton_info"] = COCO_SKELETON_INFO
-        args_pose['n_keypoints'] = N_KEYPOINTS
+        args_pose["skeleton_info"] = COCO_SKELETON_INFO_17
+        args_pose['n_keypoints'] = N_KEYPOINTS_TOTAL
         args_pose['save_json'] = SAVE_JSON
         args_pose['save_frames'] = SAVE_FRAMES
         args_pose['skip_frames'] = SKIP_FRAMES
@@ -335,10 +550,10 @@ if __name__ == "__main__":
                     instance_info = data.get('instance_info', {})
                     keypoints = instance_info[0]['keypoints']
                     
-                resulting_kpts.append(np.array(keypoints[0:N_KEYPOINTS], dtype=np.float32))
+                resulting_kpts.append(np.array(keypoints[0: N_KEYPOINTS_TOTAL], dtype=np.float32))
                       
     resulting_kpts = np.array(resulting_kpts)
-    resulting_kpts = resulting_kpts.reshape(-1, N_KEYPOINTS, 2)
+    resulting_kpts = resulting_kpts.reshape(-1, N_KEYPOINTS_TOTAL, 2)
     
     args_lstm = {}
       
@@ -346,14 +561,21 @@ if __name__ == "__main__":
     args_lstm["vel"] = VEL
     args_lstm["seq_len"] = SEQ_LEN
     args_lstm["classes"] = CLASSES
-    args_lstm["n_keypoints"] = N_KEYPOINTS
+    args_lstm["n_keypoints"] = N_KEYPOINTS_TOTAL
     args_lstm["model_path"] = LSTM_MODEL_PATH
 
     pred_label, probs = predict_LSTM_mod.lstm_main(args_lstm)
     
+    if pred_label == 'bench_press' or pred_label == 'pull_up':
+        n_keypoints_used = N_KEYPOINTS_SHORTENED
+        resulting_kpts = resulting_kpts[:, :N_KEYPOINTS_SHORTENED, :]
+    else:
+        n_keypoints_used = N_KEYPOINTS_TOTAL 
+    
     args_homography = {}
     
     args_homography['keypoints'] = resulting_kpts
+    args_homography['n_keypoints'] = n_keypoints_used
     args_homography['class_name'] = pred_label
     args_homography['img_shape'] = images[0].shape[:2]
 
@@ -381,10 +603,12 @@ if __name__ == "__main__":
         kpts_dict['right_wrist'] = frame_kpts[10]
         kpts_dict['left_hip'] = frame_kpts[11]
         kpts_dict['right_hip'] = frame_kpts[12]
-        # kpts_dict['left_knee'] = frame_kpts[13]
-        # kpts_dict['right_knee'] = frame_kpts[14]
-        # kpts_dict['left_ankle'] = frame_kpts[15]
-        # kpts_dict['right_ankle'] = frame_kpts[16]
+        
+        if n_keypoints_used == N_KEYPOINTS_TOTAL:
+            kpts_dict['left_knee'] = frame_kpts[13]
+            kpts_dict['right_knee'] = frame_kpts[14]
+            kpts_dict['left_ankle'] = frame_kpts[15]
+            kpts_dict['right_ankle'] = frame_kpts[16]
 
         kpts_dict_list.append(kpts_dict)
     
@@ -416,12 +640,13 @@ if __name__ == "__main__":
     counter_images = []
     count = 0
     i = 0
-    
-    print('Total frames to process for rep counting:', len(images), len(resulting_kpts), len(corrected_kpts))
 
     for img, kps, warped_kpts in zip(images, resulting_kpts, corrected_kpts):
         
-        drawn_img = draw_keypoints(img.copy(), kps, COCO_KPTS_COLORS, COCO_SKELETON_INFO)
+        if n_keypoints_used == N_KEYPOINTS_SHORTENED:
+            drawn_img = draw_keypoints(img.copy(), kps, COCO_KPTS_COLORS, COCO_SKELETON_INFO_13)
+        else:
+            drawn_img = draw_keypoints(img.copy(), kps, COCO_KPTS_COLORS, COCO_SKELETON_INFO_17)
         counter_img = draw_counter(drawn_img, count)
         i += 1
 
@@ -450,3 +675,5 @@ if __name__ == "__main__":
     
     print('Total time pose estimation:', np.round(total_time_pose, 3), ' seconds')
     print('Total time:', np.round(time.time() - time_count, 3), ' seconds')
+    
+    print('Total reps counted:', count)

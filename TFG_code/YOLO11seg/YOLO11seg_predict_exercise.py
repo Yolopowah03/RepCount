@@ -8,9 +8,9 @@ import time
 
 CONF = 0.2
 MODEL_PATH = '/datatmp2/joan/tfg_joan/models_exercise_seg/YOLO11seg_exercise_batch1.pt'
-IMAGE_DIR = '/datatmp2/joan/tfg_joan/images/test/bench_press1'
-OUT_IMAGE_PATH = '/datatmp2/joan/tfg_joan/results/seg/test_bench_press1'
-OUTPUT_XML = '/datatmp2/joan/tfg_joan/results/seg/test_bench_press1/test_bench_press_seg.xml'
+IMAGE_DIR = '/datatmp2/joan/tfg_joan/LSTM_dataset/test/images/bench_press/bench_press_2'
+OUT_IMAGE_PATH = '/datatmp2/joan/tfg_joan/results/seg/test_bench_press2'
+OUTPUT_XML = '/datatmp2/joan/tfg_joan/results/seg/test_bench_press2/test_bench_press_seg.xml'
 
 os.makedirs(OUT_IMAGE_PATH, exist_ok=True)
 

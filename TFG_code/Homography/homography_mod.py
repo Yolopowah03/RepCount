@@ -7,23 +7,24 @@ LABEL_DIR = '/datatmp2/joan/tfg_joan/LSTM_dataset/train/labels'
 OUTPUT_IMAGE_DIR = '/datatmp2/joan/tfg_joan/results/homography'
 CLASSES = ['bench_press', 'deadlift', 'squat', 'pull_up']
 
-# Mapeo COCO 17: intercambiar índices left<->right
-# COCO order: 0:nose,1:l_eye,2:r_eye,3:l_ear,4:r_ear,5:l_sh,6:r_sh,7:l_elb,8:r_elb,9:l_wri,10:r_wri,
-# 11:l_hip,12:r_hip
-
 BENCH_PRESS_DISTR = np.array([[0.4127,0.368],[0.6513,0.453],[0.41,0.217],[0.656,0.244]], dtype=np.float32)
-PULL_UP_DISTR = np.array([[0.4733, 0.4166],[0.548,0.4282],[0.483,0.5984],[0.5338,0.604]], dtype=np.float32)
-DEADLIFT_DISTR = np.array([[0.4811,0.32],[0.55,0.3125],[0.4915,0.4594],[0.5384,0.458]], dtype=np.float32)
-SQUAT_DISTR = np.array([[0.3867,0.229],[0.472,0.229],[0.4199,0.539],[0.513,0.539]], dtype=np.float32)
+PULL_UP_DISTR = np.array([[0.478,0.437],[0.542,0.437],[0.433,0.194],[0.579,0.194]], dtype=np.float32)
+DEADLIFT_DISTR = np.array([[0.36,0.713],[0.56,0.736],[0.43,0.859],[0.51,0.867]], dtype=np.float32)
+SQUAT_DISTR = np.array([[0.534,0.573],[0.455,0.61],[0.579,0.877],[0.49,0.942]], dtype=np.float32)
 
 # LEFT_RIGHT_MAP = {
 #     1:2, 2:1, 3:4, 4:3, 5:6, 6:5, 7:8, 8:7, 9:10, 10:9, 11:12, 12:11
 # }
 
+# Colzes, canells
 BENCH_PRESS_INDICES = [7, 8, 9, 10]
-PULL_UP_INDICES = [5, 6, 11, 12]
-DEADLIFT_INDICES = [5, 6, 11, 12]
-SQUAT_INDICES = [5, 6, 11, 12]
+PULL_UP_INDICES = [5, 6, 9, 10]
+
+# Canells, peus
+DEADLIFT_INDICES = [9, 10, 15, 16]
+
+# Espatlles, genolls
+SQUAT_INDICES = [5, 6, 13, 14]
 
 
 def homography_main(args):
