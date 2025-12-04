@@ -4,15 +4,19 @@ import numpy as np
 import torch.nn as nn #type: ignore
 import json
 import os
+from sklearn.metrics import confusion_matrix #type: ignore
+import matplotlib.pyplot as plt #type: ignore
+import seaborn as sns #type: ignore
 
 CLASSES = ['bench_press', 'deadlift', 'squat', 'pull_up']
 
-N_KEYPOINTS = 13
+N_KEYPOINTS = 17
 VEL = True
 SEQ_LEN = 50
 
-MODEL_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_RepCount3.pth'
+MODEL_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_17_RepCount2.pth'
 PREDICT_DIR = '/datatmp2/joan/tfg_joan/LSTM_dataset/test/labels'
+CM_SAVE_PATH = '/datatmp2/joan/tfg_joan/results/LSTM/confusion_matrix_LSTM_RepCount.png'
 
 class LSTMClassifier(nn.Module):
     def __init__(self, input_size=52, hidden_size=256, num_layers=2, num_classes=4, dropout=0.4, num_directions=1):
@@ -157,6 +161,9 @@ if __name__ == "__main__":
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
+    
+    y_true = []
+    y_pred = []
 
     for class_name in CLASSES:
         for sub_dir, _, files in os.walk(os.path.join(PREDICT_DIR, class_name)):
@@ -174,9 +181,41 @@ if __name__ == "__main__":
                             keypoints = instance_info[0]['keypoints']
                             
                             #Filtrar cames
-                            keypoints = [keypoints[i] for i in range(len(keypoints)) if i not in [13,14,15,16]]
+                            keypoints = [keypoints[i] for i in range(0, N_KEYPOINTS)]
 
-                        video_list.append(np.array(keypoints).reshape(-1, 13, 2))
+                        video_list.append(np.array(keypoints).reshape(-1, N_KEYPOINTS, 2))
             if len(video_list) > 0:     
                 pred_label, probs = predict_video(np.vstack(video_list), model, device, seq_len=SEQ_LEN, class_names=CLASSES)
                 print(f"Video: {file_path}, True: {class_name}, Pred: {pred_label}, Probs: {probs}")
+                y_true.append(class_name)
+                y_pred.append(pred_label)
+                
+    cm = confusion_matrix(y_true, y_pred)
+    
+    print("Confusion Matrix:")
+    print(cm)
+    
+    dpi = 100
+    
+    plt.figure(figsize=(8, 7)) # Ajusta el tamaño para que sea legible
+
+    # Crear el mapa de calor con seaborn
+    sns.heatmap(
+        cm, 
+        annot=True,              # Mostrar los números en las celdas
+        fmt='d',                 # Formato para mostrar enteros
+        cmap='Blues',            # Esquema de colores
+        cbar=True,               # Mostrar la barra lateral de color (opcional)
+        xticklabels=CLASSES,   # Etiquetas del eje X (Predicho)
+        yticklabels=CLASSES    # Etiquetas del eje Y (Real)
+    )
+    
+    plt.ylabel('Exercici real', fontsize=13)
+    plt.xlabel('Exercici predit', fontsize=13)
+    plt.title("Matriz de Confusió LSTM Classificador d'exercici", fontsize=16)
+    
+    plt.tight_layout() 
+    
+    os.makedirs(os.path.dirname(CM_SAVE_PATH), exist_ok=True)
+
+    plt.savefig(CM_SAVE_PATH, dpi=dpi, bbox_inches='tight')

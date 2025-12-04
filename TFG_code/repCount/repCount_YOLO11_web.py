@@ -1,13 +1,8 @@
-import os
 import cv2 as cv # type: ignore
 import sys
-import json
 import numpy as np
 import importlib
-import time
 import matplotlib.pyplot as plt
-
-time_count = time.time()
 
 PYTHON_LSTM_PATH = '/datatmp2/joan/tfg_joan/TFG_code/LSTM'
 PYTHON_YOLO_PATH = '/datatmp2/joan/tfg_joan/TFG_code/YOLO_pose'
@@ -23,18 +18,9 @@ import predict_LSTM_mod # type: ignore
 import predict_YOLO11_mod # type: ignore
 import homography_mod # type: ignore
 
-VIDEO_PATH = '/datatmp2/joan/tfg_joan/videos/train/pull_up/train_pull_up_013.mp4'
-OUTPUT_DIR_POSE = "/datatmp2/joan/tfg_joan/results/pose/pull_up/pull_up_test_013"
-OUTPUT_PATH_VIDEO = "/datatmp2/joan/tfg_joan/results/repCount/repcount_pull_up_test_013.mp4"
-
 CLASSES = ['bench_press', 'deadlift', 'squat', 'pull_up']
 N_KEYPOINTS_TOTAL = 17
 N_KEYPOINTS_SHORTENED = 13
-SKIP_FRAMES = 1
-FPS_REDUCTION = 1
-
-# PRE_LOADED_JSON_DIR = '/datatmp2/joan/tfg_joan/results/repcount'
-PRE_LOADED_JSON_DIR = '/datatmp2/joan/tfg_joan/results/YOLO_pose/repcount_bench_press11'
 
 #YOLO
 YOLO_MODEL_PATH='/datatmp2/joan/tfg_joan/models_YOLO11_pose/yolo11m-pose.pt'
@@ -247,7 +233,7 @@ def create_histogram(history, history_swiftened, save_path, counts, counts_end):
     
     plt.savefig(save_path)
 
-def repcount_bench_press(keypoints):
+def repcount_bench_press(keypoints, skip_frames):
 
     #PLA: Canells, espatlles
     
@@ -265,7 +251,7 @@ def repcount_bench_press(keypoints):
     
     for i, frame_keypoints in enumerate(keypoints):
         
-        if (i % SKIP_FRAMES) == 1:
+        if (i % skip_frames) == 1:
             continue
         
         if timer > 0:
@@ -325,7 +311,7 @@ def repcount_bench_press(keypoints):
     # print('timestamps_initial', timestamps_initial)
     return timestamps, timestamps_end, distance_history, distance_history_swiftened
     
-def repcount_deadlift(keypoints):
+def repcount_deadlift(keypoints, skip_frames):
 
     #PLA: Mans, peus
     # Initial Position: Mans agafant la barra del terra
@@ -342,7 +328,7 @@ def repcount_deadlift(keypoints):
     
     for i, frame_keypoints in enumerate(keypoints):
         
-        if (i % SKIP_FRAMES) == 1:
+        if (i % skip_frames) == 1:
             continue
         
         if timer > 0:
@@ -402,7 +388,7 @@ def repcount_deadlift(keypoints):
     # print('timestamps_initial', timestamps_initial)
     return timestamps, timestamps_end, distance_history, distance_history_swiftened
     
-def repcount_squat(keypoints):
+def repcount_squat(keypoints, skip_frames):
     
     #PLA: Espatlles, genolls
     
@@ -420,7 +406,7 @@ def repcount_squat(keypoints):
     
     for i, frame_keypoints in enumerate(keypoints):
         
-        if (i % SKIP_FRAMES) == 1:
+        if (i % skip_frames) == 1:
             continue
         
         if timer > 0:
@@ -483,7 +469,7 @@ def repcount_squat(keypoints):
     # print('timestamps_initial', timestamps_initial)
     return timestamps, timestamps_end, distance_history, distance_history_swiftened
 
-def repcount_pull_up(keypoints):
+def repcount_pull_up(keypoints, skip_frames):
     
     #PLA: Canells, espatlles
     
@@ -501,7 +487,7 @@ def repcount_pull_up(keypoints):
     
     for i, frame_keypoints in enumerate(keypoints):
         
-        if (i % SKIP_FRAMES) == 1:
+        if (i % skip_frames) == 1:
             continue
         
         if timer > 0:
@@ -568,53 +554,29 @@ def save_video(image_list, output_path, fps):
 
     out.release()
 
-if __name__ == "__main__":
+def repcount_main(args):
     
-    print('Processing ', VIDEO_PATH)
+    print('Processing ', args['input_video_path'])
     
-    images, fps_og = extract_images_from_video(VIDEO_PATH, SKIP_FRAMES)
+    images, fps_og = extract_images_from_video(args['input_video_path'], args['skip_frames'])
 
-    pre_loaded = False
+    args_pose = {}
 
-    if PRE_LOADED_JSON_DIR is not None and os.path.exists(PRE_LOADED_JSON_DIR):
-        for json_file in os.listdir(PRE_LOADED_JSON_DIR):
-            if json_file.endswith('.json'):
-                pre_loaded = True
-                break
-
-    if not pre_loaded:
-        args_pose = {}
-
-        args_pose["model_path"] = YOLO_MODEL_PATH
-        args_pose["input_video_path"] = VIDEO_PATH
-        args_pose["output_dir"] = OUTPUT_DIR_POSE
-        args_pose["device"] = fr"cuda:{VALID_GPU_ID}"
-        args_pose["kpt_thr"] = 0.3
-        args_pose["kpts_colors"] = COCO_KPTS_COLORS
-        args_pose["skeleton_info"] = COCO_SKELETON_INFO_17
-        args_pose['n_keypoints'] = N_KEYPOINTS_TOTAL
-        args_pose['save_json'] = SAVE_JSON
-        args_pose['save_frames'] = SAVE_FRAMES
-        args_pose['skip_frames'] = SKIP_FRAMES
-        args_pose['min_conf'] = MIN_CONF
-        out_pose = predict_YOLO11_mod.yolo_mod(args_pose)
-        
-        total_time_pose = out_pose['total_time']
-        resulting_kpts = out_pose['resulting_kpts']
-        
-    else:
-        resulting_kpts = []
-        for file in os.listdir(PRE_LOADED_JSON_DIR):
-            if file.endswith('.json'):
-                file_path = os.path.join(PRE_LOADED_JSON_DIR, file)
-                with open(file_path, 'r') as f:
-                    
-                    data = json.load(f)
-                    
-                    instance_info = data.get('instance_info', {})
-                    keypoints = instance_info[0]['keypoints']
-                    
-                resulting_kpts.append(np.array(keypoints[0: N_KEYPOINTS_TOTAL], dtype=np.float32))
+    args_pose["model_path"] = YOLO_MODEL_PATH
+    args_pose["input_video_path"] = args['input_video_path']
+    args_pose["output_dir"] = None
+    args_pose["device"] = fr"cuda:{VALID_GPU_ID}"
+    args_pose["kpt_thr"] = 0.3
+    args_pose["kpts_colors"] = COCO_KPTS_COLORS
+    args_pose["skeleton_info"] = COCO_SKELETON_INFO_17
+    args_pose['n_keypoints'] = N_KEYPOINTS_TOTAL
+    args_pose['save_json'] = SAVE_JSON
+    args_pose['save_frames'] = SAVE_FRAMES
+    args_pose['skip_frames'] = args['skip_frames']
+    args_pose['min_conf'] = MIN_CONF
+    out_pose = predict_YOLO11_mod.yolo_mod(args_pose)
+    
+    resulting_kpts = out_pose['resulting_kpts']
                       
     resulting_kpts = np.array(resulting_kpts)
     resulting_kpts = resulting_kpts.reshape(-1, N_KEYPOINTS_TOTAL, 2)
@@ -680,23 +642,23 @@ if __name__ == "__main__":
         case 0:
             print('Predicted exercise: Bench Press')
             
-            time_labels, time_labels_end, distance_history, distance_history_swiftened = repcount_bench_press(kpts_dict_list)
+            time_labels, time_labels_end, distance_history, distance_history_swiftened = repcount_bench_press(kpts_dict_list, args['skip_frames'])
             print('RepCount:', time_labels)
             
         case 1:
             print('Predicted exercise: Deadlift')
             
-            time_labels, time_labels_end, distance_history, distance_history_swiftened = repcount_deadlift(kpts_dict_list)
+            time_labels, time_labels_end, distance_history, distance_history_swiftened = repcount_deadlift(kpts_dict_list, args['skip_frames'])
             
         case 2:
             print('Predicted exercise: Squat')
 
-            time_labels, time_labels_end, distance_history, distance_history_swiftened = repcount_squat(kpts_dict_list)
+            time_labels, time_labels_end, distance_history, distance_history_swiftened = repcount_squat(kpts_dict_list, args['skip_frames'])
 
         case 3:
             print('Predicted exercise: Pull Up')
 
-            time_labels, time_labels_end, distance_history, distance_history_swiftened = repcount_pull_up(kpts_dict_list)
+            time_labels, time_labels_end, distance_history, distance_history_swiftened = repcount_pull_up(kpts_dict_list, args['skip_frames'])
             
         case _:
             print('Error: Unknown class index')
@@ -730,22 +692,16 @@ if __name__ == "__main__":
             
         counter_images.append(counter_img)
         
-    video_save_dir = os.path.dirname(OUTPUT_PATH_VIDEO)
-    video_save_name = os.path.basename(OUTPUT_PATH_VIDEO).split('.mp4')[0]
-    hist_save_path = os.path.join(video_save_dir, video_save_name + '_hist.jpg')
-    
-    if not os.path.exists(video_save_dir):
-        os.makedirs(video_save_dir)
+    hist_save_path = args['output_path_img']
         
-    histogram = create_histogram(distance_history, distance_history_swiftened, hist_save_path, time_labels, time_labels_end)
+    create_histogram(distance_history, distance_history_swiftened, hist_save_path, time_labels, time_labels_end)
     
     print('Saved histogram at:', hist_save_path)
             
     print('Total processed frames:', len(counter_images))
-    save_video(counter_images, OUTPUT_PATH_VIDEO, fps=fps_og/(SKIP_FRAMES*FPS_REDUCTION))
-    print('Saved output at:', OUTPUT_PATH_VIDEO)
-    
-    print('Total time pose estimation:', np.round(total_time_pose, 3), ' seconds')
-    print('Total time:', np.round(time.time() - time_count, 3), ' seconds')
+    save_video(counter_images, args['output_path_video'], fps=fps_og/(args['skip_frames']*args['fps_reduction']))
+    print('Saved output at:', args['output_path_video'])
     
     print('Total reps counted:', count)
+    
+    return count, pred_label

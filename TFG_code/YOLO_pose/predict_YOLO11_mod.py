@@ -52,7 +52,7 @@ def save_json(keypoints, scores, output_path, kpt_colors, kpt_thr,):
 
 def yolo_mod(args):
     
-    begin_time = time.time()
+    begin_time = time.perf_counter()
     
     model = YOLO(args['model_path'])
     
@@ -66,8 +66,9 @@ def yolo_mod(args):
         if i % args['skip_frames'] != 1:
             file = f"{os.path.splitext(os.path.basename(args['input_video_path']))[0]}_frame_{i:06d}.jpg"
             
-            save_path = os.path.join(args['output_dir'], file)
-            save_path_json = save_path.replace(".jpg", ".json").replace(".png", ".json")
+            if args['output_dir'] is not None:
+                save_path = os.path.join(args['output_dir'], file)
+                save_path_json = save_path.replace(".jpg", ".json").replace(".png", ".json")
             
             results = model(frame, verbose=False)  # predict on an image
             
@@ -122,4 +123,4 @@ def yolo_mod(args):
     
     cap.release()
 
-    return {'total_time': time.time()-begin_time, 'resulting_kpts': total_resulting_kpts}
+    return {'total_time': time.perf_counter()-begin_time, 'resulting_kpts': total_resulting_kpts}
