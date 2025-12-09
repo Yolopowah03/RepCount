@@ -3,6 +3,8 @@ import sys
 import numpy as np
 import importlib
 import matplotlib.pyplot as plt
+import os
+import subprocess
 
 PYTHON_LSTM_PATH = '/datatmp2/joan/tfg_joan/TFG_code/LSTM'
 PYTHON_YOLO_PATH = '/datatmp2/joan/tfg_joan/TFG_code/YOLO_pose'
@@ -229,7 +231,7 @@ def create_histogram(history, history_swiftened, save_path, counts, counts_end):
     ax[1].set_ylabel('Distància euclidiana (píxels)')   
     ax[1].grid(True, linestyle=':', alpha=0.7)
     
-    fig.suptitle('Anàlisi de pose Dominades', fontsize=16)
+    fig.suptitle('Anàlisi de pose Exercici', fontsize=16)
     
     plt.savefig(save_path)
 
@@ -546,13 +548,35 @@ def save_video(image_list, output_path, fps):
     height, width, layers = image_list[0].shape
     frame_size = (width, height)
     
+    temp_path = output_path + '.temp.mp4'
+    
     fourcc = cv.VideoWriter_fourcc(*'mp4v')
-    out = cv.VideoWriter(output_path, fourcc, fps, frame_size)
+    out = cv.VideoWriter(temp_path, fourcc, fps, frame_size)
 
     for img in image_list:
         out.write(img)
 
     out.release()
+    
+    ffmpeg_command = [
+        'ffmpeg',
+        '-i', temp_path,
+        '-c:v', 'libx264',
+        '-pix_fmt', 'yuv420p',
+        '-preset', 'medium',
+        '-crf', '23',
+        '-movflags', 'faststart',
+        output_path
+    ]
+    
+    try:
+        subprocess.run(ffmpeg_command, check=True, capture_output=True)
+    except subprocess.CalledProcessError as e:
+        print("Error during ffmpeg execution:")
+        print(e.stderr.decode())
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
 
 def repcount_main(args):
     

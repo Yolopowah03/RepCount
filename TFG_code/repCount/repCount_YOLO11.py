@@ -6,6 +6,7 @@ import numpy as np
 import importlib
 import time
 import matplotlib.pyplot as plt
+import subprocess
 
 time_count = time.time()
 
@@ -560,13 +561,35 @@ def save_video(image_list, output_path, fps):
     height, width, layers = image_list[0].shape
     frame_size = (width, height)
     
+    temp_path = output_path + '.temp.mp4'
+    
     fourcc = cv.VideoWriter_fourcc(*'mp4v')
-    out = cv.VideoWriter(output_path, fourcc, fps, frame_size)
+    out = cv.VideoWriter(temp_path, fourcc, fps, frame_size)
 
     for img in image_list:
         out.write(img)
 
     out.release()
+    
+    ffmpeg_command = [
+        'ffmpeg',
+        '-i', temp_path,
+        '-c:v', 'libx264',
+        '-pix_fmt', 'yuv420p',
+        '-preset', 'medium',
+        '-crf', '23',
+        '-movflags', 'faststart',
+        output_path
+    ]
+    
+    try:
+        subprocess.run(ffmpeg_command, check=True, capture_output=True)
+    except subprocess.CalledProcessError as e:
+        print("Error during ffmpeg execution:")
+        print(e.stderr.decode())
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
 
 if __name__ == "__main__":
     
