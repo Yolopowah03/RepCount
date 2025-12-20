@@ -1,11 +1,29 @@
 import os
 import cv2 as cv #type: ignore
 
-VIDEO_FOLDER = '/datatmp2/joan/tfg_joan/videos/test/bench_press'
-OUTPUT_FOLDER = '/datatmp2/joan/tfg_joan/LSTM_dataset/test/images/bench_press'
+VIDEO_FOLDER1 = '/datatmp2/joan/tfg_joan/videos/bench_press'
+OUTPUT_FOLDER1 = '/datatmp2/joan/tfg_joan/LSTM_dataset/images/bench_press'
 
-if not os.path.exists(OUTPUT_FOLDER):
-        os.makedirs(OUTPUT_FOLDER)
+VIDEO_FOLDER2 = '/datatmp2/joan/tfg_joan/videos/squat'
+OUTPUT_FOLDER2 = '/datatmp2/joan/tfg_joan/LSTM_dataset/images/squat'
+
+VIDEO_FOLDER3 = '/datatmp2/joan/tfg_joan/videos/deadlift'
+OUTPUT_FOLDER3 = '/datatmp2/joan/tfg_joan/LSTM_dataset/images/deadlift'
+
+VIDEO_FOLDER4 = '/datatmp2/joan/tfg_joan/videos/pull_up'
+OUTPUT_FOLDER4 = '/datatmp2/joan/tfg_joan/LSTM_dataset/images/pull_up'
+
+if not os.path.exists(OUTPUT_FOLDER1):
+        os.makedirs(OUTPUT_FOLDER1)
+
+if not os.path.exists(OUTPUT_FOLDER2):
+        os.makedirs(OUTPUT_FOLDER2)
+        
+if not os.path.exists(OUTPUT_FOLDER3):
+        os.makedirs(OUTPUT_FOLDER3)
+        
+if not os.path.exists(OUTPUT_FOLDER4):
+        os.makedirs(OUTPUT_FOLDER4)        
 
 def images_from_video(video_folder, output_folder):
     
@@ -44,4 +62,7 @@ def images_from_video(video_folder, output_folder):
         print(f'Video {video_name} processed')
 
 if __name__ == "__main__": 
-    images_from_video(VIDEO_FOLDER, OUTPUT_FOLDER)
+    images_from_video(VIDEO_FOLDER1, OUTPUT_FOLDER1)
+    images_from_video(VIDEO_FOLDER2, OUTPUT_FOLDER2)
+    images_from_video(VIDEO_FOLDER3, OUTPUT_FOLDER3)
+    images_from_video(VIDEO_FOLDER4, OUTPUT_FOLDER4)

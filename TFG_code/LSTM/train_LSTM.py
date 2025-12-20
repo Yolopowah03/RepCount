@@ -33,7 +33,7 @@ LABELS_TRAIN_DIR = '/datatmp2/joan/tfg_joan/LSTM_dataset/train/labels'
 
 CLASSES = ['bench_press', 'deadlift', 'squat', 'pull_up']
 
-MODEL_SAVE_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_RepCount3.pth'
+MODEL_SAVE_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_13_RepCount3.pth'
 
 BATCH_SIZE = 8
 SEQ_LEN = 50

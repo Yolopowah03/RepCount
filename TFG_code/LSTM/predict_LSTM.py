@@ -14,9 +14,9 @@ N_KEYPOINTS = 17
 VEL = True
 SEQ_LEN = 50
 
-MODEL_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_17_RepCount2.pth'
+MODEL_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_17_RepCount1.pth'
 PREDICT_DIR = '/datatmp2/joan/tfg_joan/LSTM_dataset/test/labels'
-CM_SAVE_PATH = '/datatmp2/joan/tfg_joan/results/LSTM/confusion_matrix_LSTM_RepCount.png'
+CM_SAVE_PATH = '/datatmp2/joan/tfg_joan/results/LSTM/confusion_matrix_LSTM_17_RepCount1.png'
 
 class LSTMClassifier(nn.Module):
     def __init__(self, input_size=52, hidden_size=256, num_layers=2, num_classes=4, dropout=0.4, num_directions=1):
@@ -212,7 +212,7 @@ if __name__ == "__main__":
     
     plt.ylabel('Exercici real', fontsize=13)
     plt.xlabel('Exercici predit', fontsize=13)
-    plt.title("Matriz de Confusió LSTM Classificador d'exercici", fontsize=16)
+    plt.title("Matriu de Confusió LSTM Classificador d'exercici", fontsize=16)
     
     plt.tight_layout() 
     

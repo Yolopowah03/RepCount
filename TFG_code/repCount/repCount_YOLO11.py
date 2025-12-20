@@ -18,8 +18,6 @@ for p in (PYTHON_LSTM_PATH, PYTHON_YOLO_PATH, PYTHON_HOMOGRAPHY_PATH):
     if p not in sys.path:
         sys.path.append(p)
         
-importlib.invalidate_caches()
-
 import predict_LSTM_mod # type: ignore
 import predict_YOLO11_mod # type: ignore
 import homography_mod # type: ignore
@@ -180,7 +178,7 @@ def draw_keypoints(image, kpts, kpt_colors, skeleton_info, kpt_thr=0.3, radius=3
     return image
 
 def draw_counter(image, count):
-    font = cv.FONT_HERSHEY_DUPLEX
+    font = cv.FONT_ITALIC
     text_position = (100, 100)
     fontScale = 2
     fontColor = (255, 0, 0)
@@ -214,7 +212,7 @@ def draw_counter(image, count):
     
 #     return theta_deg
 
-def create_histogram(history, history_swiftened, save_path, counts, counts_end):
+def create_histogram(history, history_swiftened, save_path, counts, counts_end, pred_label):
     
     fig, ax = plt.subplots(2, 1, figsize=(10, 6), dpi=100)
     plt.subplots_adjust(hspace=0.4)
@@ -235,16 +233,16 @@ def create_histogram(history, history_swiftened, save_path, counts, counts_end):
         ax[0].axvline(x=count_end, color='orange', linewidth=2, linestyle='--')
         ax[1].axvline(x=count_end, color='orange', linewidth=2, linestyle='--')
         
-    ax[0].set_title('Histograma Distància')
+    ax[0].set_title("Anàlisi de l'exercici")
     ax[0].set_xlabel('Frame')
-    ax[0].set_ylabel('Distància euclidiana (píxels)')
+    ax[0].set_ylabel('Moviment')
     ax[0].grid(True, linestyle=':', alpha=0.7)
-    ax[1].set_title('Histograma Distància Transformada')
+    ax[1].set_title("Anàlisi de l'exercici (suavitzat)")
     ax[1].set_xlabel('Frame')
-    ax[1].set_ylabel('Distància euclidiana (píxels)')   
+    ax[1].set_ylabel('Moviment')   
     ax[1].grid(True, linestyle=':', alpha=0.7)
     
-    fig.suptitle('Anàlisi de pose Dominades', fontsize=16)
+    fig.suptitle(f'Anàlisi de pose {pred_label}', fontsize=16)
     
     plt.savefig(save_path)
 
@@ -760,7 +758,7 @@ if __name__ == "__main__":
     if not os.path.exists(video_save_dir):
         os.makedirs(video_save_dir)
         
-    histogram = create_histogram(distance_history, distance_history_swiftened, hist_save_path, time_labels, time_labels_end)
+    histogram = create_histogram(distance_history, distance_history_swiftened, hist_save_path, time_labels, time_labels_end, pred_label)
     
     print('Saved histogram at:', hist_save_path)
             

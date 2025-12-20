@@ -1,0 +1,168 @@
+/* History.css */
+
+/* Contenedor principal de la página */
+.history-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Cabecera */
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 1rem;
+}
+
+.gradient-title {
+  margin: 0;
+  font-size: 2rem;
+  background: linear-gradient(45deg, #4f46e5, #9333ea);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Botón pequeño de logout en la cabecera */
+.logout-icon-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  transition: color 0.3s;
+}
+
+.logout-icon-btn:hover {
+  color: #ef4444;
+}
+
+/* Lista del historial */
+.history-list-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.2s;
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-item:hover {
+  background-color: #f9fafb;
+}
+
+/* Columna de fecha */
+.history-date-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  margin-right: 1.5rem;
+  padding-right: 1.5rem;
+  border-right: 2px solid #e5e7eb;
+  color: #6b7280;
+}
+
+.date-day {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.date-time {
+  font-size: 0.8rem;
+}
+
+/* Columna de detalles */
+.history-details {
+  flex-grow: 1;
+  color: black;
+}
+
+.history-action {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.1rem;
+  color: #1f2937;
+}
+
+.history-meta {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+/* Estados de carga y vacío */
+.loading-spinner, .empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Sección de Logout (Confirmación) */
+.logout-confirmation {
+  text-align: center;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.logout-confirmation p {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.button-group {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.submit-button {
+  padding: 0.5rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.logout-button {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+}
+
+.logout-button:hover {
+  background-color: #dc2626;
+}
+
+.cancel-button {
+  background-color: transparent;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+
+.cancel-button:hover {
+  background-color: #f3f4f6;
+}

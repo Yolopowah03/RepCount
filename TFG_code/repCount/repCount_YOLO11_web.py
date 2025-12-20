@@ -32,7 +32,7 @@ SAVE_JSON = False
 MIN_CONF = 0.15
 
 #LSTM 
-LSTM_MODEL_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_17_RepCount2.pth'
+LSTM_MODEL_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_17_RepCount1.pth'
 VEL = True
 SEQ_LEN = 80
 
@@ -167,18 +167,35 @@ def draw_keypoints(image, kpts, kpt_colors, skeleton_info, kpt_thr=0.3, radius=3
     return image
 
 def draw_counter(image, count):
-    font = cv.FONT_HERSHEY_DUPLEX
-    text_position = (100, 100)
+    font = cv.FONT_ITALIC
+    text = f'RepCount: {count}'
+    text_position = (100, 100) 
     fontScale = 2
-    fontColor = (255, 0, 0)
+    fontColor = (0, 0, 0)
+    backgroundColor = (255, 255, 255) 
     lineType = 3
+    thickness = 3 
+    padding = 10
 
-    cv.putText(image, f'Rep Count: {count}', 
+    (text_w, text_h), baseLine = cv.getTextSize(text, font, fontScale, thickness)
+
+    pt1_x = text_position[0] - padding
+    pt1_y = text_position[1] - text_h - padding
+    pt1 = (pt1_x, pt1_y)
+
+    pt2_x = text_position[0] + text_w + padding
+    pt2_y = text_position[1] + baseLine + padding
+    pt2 = (pt2_x, pt2_y)
+    
+    cv.rectangle(image, pt1, pt2, backgroundColor, -1)
+
+    cv.putText(image, text, 
         text_position, 
         font, 
         fontScale,
         fontColor,
         lineType)
+    
     
     return image
 
@@ -201,37 +218,26 @@ def draw_counter(image, count):
     
 #     return theta_deg
 
-def create_histogram(history, history_swiftened, save_path, counts, counts_end):
+def create_histogram(history, history_swiftened, save_path, counts, counts_end, pred_label):
     
-    fig, ax = plt.subplots(2, 1, figsize=(10, 6), dpi=100)
+    fig, ax = plt.subplots(1, 1, figsize=(10, 5), dpi=100)
+    
     plt.subplots_adjust(hspace=0.4)
-    
-    ax[0].plot(history, color='red', linewidth=2, label='Original')
-    ax[1].plot(history_swiftened, color='blue', linewidth=2, label='Swiftened')
-    
-    ax[0].set_xlim(0, len(history))
-    ax[1].set_xlim(0, len(history))
-    ax[0].set_ylim(0, max(history))
-    ax[1].set_ylim(0, max(history))
+    ax.plot(history, label='Distància euclidiana', color='red', linewidth=1)    
+    ax.set_xlim(0, len(history))
+    ax.set_ylim(0, max(history))
     
     for count in counts:
-        ax[0].axvline(x=count, color='green', linewidth=2)
-        ax[1].axvline(x=count, color='green', linewidth=2)
+        ax.axvline(x=count, color='green', linewidth=2)
         
     for count_end in counts_end:
-        ax[0].axvline(x=count_end, color='orange', linewidth=2, linestyle='--')
-        ax[1].axvline(x=count_end, color='orange', linewidth=2, linestyle='--')
+        ax.axvline(x=count_end, color='orange', linewidth=2, linestyle='--')
         
-    ax[0].set_title('Histograma Distància')
-    ax[0].set_xlabel('Frame')
-    ax[0].set_ylabel('Distància euclidiana (píxels)')
-    ax[0].grid(True, linestyle=':', alpha=0.7)
-    ax[1].set_title('Histograma Distància Transformada')
-    ax[1].set_xlabel('Frame')
-    ax[1].set_ylabel('Distància euclidiana (píxels)')   
-    ax[1].grid(True, linestyle=':', alpha=0.7)
+    ax.set_xlabel('Frame')
+    ax.set_ylabel('Moviment')   
+    ax.grid(True, linestyle=':', alpha=0.7)
     
-    fig.suptitle('Anàlisi de pose Exercici', fontsize=16)
+    fig.suptitle(f'Anàlisi de pose {pred_label}', fontsize=16)
     
     plt.savefig(save_path)
 
@@ -543,12 +549,15 @@ def repcount_pull_up(keypoints, skip_frames):
     # print('timestamps_initial', timestamps_initial)
     return timestamps, timestamps_end, distance_history, distance_history_swiftened
 
-def save_video(image_list, output_path, fps):
+def save_video(image_list, output_path_video, output_path_thumbnail, fps):
     
     height, width, layers = image_list[0].shape
     frame_size = (width, height)
     
-    temp_path = output_path + '.temp.mp4'
+    thumbnail = image_list[0]
+    cv.imwrite(output_path_thumbnail, thumbnail)
+    
+    temp_path = output_path_video + '.temp.mp4'
     
     fourcc = cv.VideoWriter_fourcc(*'mp4v')
     out = cv.VideoWriter(temp_path, fourcc, fps, frame_size)
@@ -566,7 +575,7 @@ def save_video(image_list, output_path, fps):
         '-preset', 'medium',
         '-crf', '23',
         '-movflags', 'faststart',
-        output_path
+        output_path_video
     ]
     
     try:
@@ -718,12 +727,12 @@ def repcount_main(args):
         
     hist_save_path = args['output_path_img']
         
-    create_histogram(distance_history, distance_history_swiftened, hist_save_path, time_labels, time_labels_end)
+    create_histogram(distance_history, distance_history_swiftened, hist_save_path, time_labels, time_labels_end, pred_label)
     
     print('Saved histogram at:', hist_save_path)
             
     print('Total processed frames:', len(counter_images))
-    save_video(counter_images, args['output_path_video'], fps=fps_og/(args['skip_frames']*args['fps_reduction']))
+    save_video(counter_images, args['output_path_video'], args['output_path_thumbnail'], fps=fps_og/(args['skip_frames']*args['fps_reduction']))
     print('Saved output at:', args['output_path_video'])
     
     print('Total reps counted:', count)

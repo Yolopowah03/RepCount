@@ -1,4 +1,4 @@
-#!/bin/bash
+
 
 cd ../../.. || exit
 SAPIENS_CHECKPOINT_ROOT='/datatmp2/joan/tfg_joan/sapiens/sapiens_lite_host'
@@ -7,8 +7,8 @@ MODE='torchscript'
 SAPIENS_CHECKPOINT_ROOT=$SAPIENS_CHECKPOINT_ROOT/$MODE
 
 # Directorio raíz de entrada y salida
-INPUT_ROOT='/datatmp2/joan/tfg_joan/LSTM_dataset/train/images/squat'
-OUTPUT_ROOT="/datatmp2/joan/tfg_joan/LSTM_dataset/train/labels/squat"
+INPUT_ROOT='/datatmp2/joan/tfg_joan/LSTM_dataset/images/squat'
+OUTPUT_ROOT="/datatmp2/joan/tfg_joan/LSTM_dataset/labels/squat"
 
 MODEL_NAME='sapiens_1b'
 CHECKPOINT=/datatmp2/joan/tfg_joan/sapiens/sapiens_lite_host/torchscript/pose/checkpoints/sapiens_1b/sapiens_1b_coco_best_coco_AP_821_torchscript.pt2
@@ -22,10 +22,13 @@ KPT_THRES=0.3
 
 RUN_FILE='/datatmp2/joan/tfg_joan/sapiens/lite/demo/vis_pose.py'
 
-JOBS_PER_GPU=1; TOTAL_GPUS=1; VALID_GPU_IDS=(0)
+JOBS_PER_GPU=1; TOTAL_GPUS=4; VALID_GPU_IDS=(0 1 2 3 4)
 BATCH_SIZE=8
 
 export TF_CPP_MIN_LOG_LEVEL=2
+
+#print current directory
+pwd
 
 find "$INPUT_ROOT" -mindepth 1 -type d | while read -r INPUT; do
   REL_PATH=${INPUT#"$INPUT_ROOT"}   # ahora sí quita bien el prefijo
