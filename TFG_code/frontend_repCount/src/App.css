@@ -9,57 +9,51 @@
     --color-red-dark: #7a0909;
     --color-orange-dark: #c44206; 
     --color-red-hover: #ff9549; 
-    --color-orange-hover: #7e22ce; 
+    --color-orange-hover: #bc2600; 
 }
-/* Estilos principales (simulando min-h-screen, flex, etc.) */
-body {
-    min-height: 60vh;
-    background-color: var(--color-bg-dark);
-    color: var(--color-text-light);
-    display: block;
-    padding: 1rem; /* p-4 */
-    font-family: 'Inter', sans-serif;
-    margin: 0;
-    margin-right: 50px;
-}
-/* Contenedor de la tarjeta (simulando bg-gray-800, max-w-3xl, shadow) */
+
 .card-container {
-    background-color: var(--color-bg-card);
+    background-color: rgba(26, 25, 25, 0.70); 
+    padding: 2.5rem;
     padding: 2rem; /* p-8 */
-    border-radius: 0.75rem; /* rounded-xl */
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2); /* shadow-2xl */
-    width: 100%;
-    min-width: 20rem; /* min-w-sm */
-    min-height: 90vh;
+    border-radius: 1rem; /* rounded-xl */
+    backdrop-filter: blur(10px);
+
+    width: 90%;
+    min-height: auto;
+    max-width: 1100px;
+    margin: 40px auto;
+
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px;
     text-align: center;
 }
 
-.card-container > .user-menu-container {
+.user-menu-container {
     display: flex;
     justify-content: flex-end;
     position: relative;
-    width: 100%;
-    gap: 10px;
+    margin-right: 40px;
+    padding-bottom: 10px; 
+    margin-bottom: -10px;
 }
 
 .menu {
     position: absolute;
-    top: 100%;
-    right: 3%;
+    /* En lugar de top: 100%, usamos un valor que lo pegue al botón */
+    top: 35px; 
+    right: 30px; /* Alineado al borde derecho del botón */
     background-color: white;
     border: 1px solid #ccc;
     border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 1001; /* Por encima de la navbar */
     min-width: 180px;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
 }
+
 .menu-item {
     padding: 10px 15px;
     cursor: pointer;
@@ -83,7 +77,7 @@ body {
     padding: 1.5rem; /* Espacio interno */
     border-radius: 0.75rem; /* Esquinas redondeadas */
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
-    width: 100%;
+    width: auto;
     /* Asegura que el contenedor de resultados esté centrado dentro del media-container */
     display: flex;
     justify-content: center;
@@ -136,8 +130,8 @@ body {
     display: flex;
     width: auto;
     align-items: center;
-    gap: 10px;
-    margin-right: 30px;
+    gap: 15px; /* Un poco más de espacio entre botones */
+    margin-right: 40px; /* <--- Aumenta este número para separarlos más de la esquina */
 }
 
 /* Botón "Registrarse" (Estilo principal - relleno) */
@@ -179,18 +173,51 @@ body {
 
 /* Título con gradiente (simulando text-transparent bg-clip-text bg-gradient) */
 .gradient-title {
-    font-size: 2.25rem; /* text-4xl */
-    font-weight: 800; /* font-extrabold */
+    font-size: 2.5rem;
+    font-weight: 900;
     text-align: center;
-    margin-bottom: 1.5rem; /* mb-6 */
+    margin-bottom: 1.5rem;
+    display: block; /* Asegura que ocupe su propia línea */
+
+    /* Forzamos el gradiente con !important */
+    background: linear-gradient(90deg, #f12323 0%, #ff7700 100%) !important;
     
-    /* Aplicación del gradiente */
-    background: linear-gradient(to right, var(--color-red), var(--color-orange));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    color: transparent; /* Fallback for browsers */
+    /* Aplicamos el recorte */
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    
+    /* Forzamos la transparencia del relleno */
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+
+    /* Seguridad adicional: eliminamos sombras o decoraciones que puedan dar tonos morados */
+    text-decoration: none !important;
+    text-shadow: none !important;
 }
+
+.gradient-subtitle {
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    display: block; /* Asegura que ocupe su propia línea */
+
+    /* Forzamos el gradiente con !important */
+    background: linear-gradient(90deg, #cf0202 0%, #d46300 100%) !important;
+    
+    /* Aplicamos el recorte */
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    
+    /* Forzamos la transparencia del relleno */
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+
+    /* Seguridad adicional: eliminamos sombras o decoraciones que puedan dar tonos morados */
+    text-decoration: none !important;
+    text-shadow: none !important;
+}
+
 /* Texto de descripción */
 .description-text {
     text-align: center;
@@ -374,195 +401,7 @@ body {
     to { transform: rotate(360deg); }
 }
 
-.login-form, .register-form {
-    /* Aquí van todos los estilos de contenedor del formulario (max-width, margin, background, etc.) */
-    width: 100%;
-    max-width: 400px; 
-    margin: 1.5rem auto; 
-    padding: 1.5rem;
-    background-color: var(--color-bg-media); 
-    border-radius: 0.75rem; 
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
 
-/* Estilos para los campos de texto (input) */
-.text-input {
-    width: 100%;
-    padding: 0.75rem; /* p-3 */
-    margin-top: 0.25rem; /* mt-1 */
-    background-color: var(--color-bg-dark); /* Fondo oscuro */
-    border: 1px solid var(--color-bg-media); /* Borde sutil */
-    border-radius: 0.375rem; /* rounded-md */
-    color: var(--color-text-light); /* Color de texto claro */
-    font-size: 1rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    box-sizing: border-box; /* Incluir padding y borde en el ancho/alto */
-}
-
-.text-input:focus {
-    outline: none;
-    border-color: var(--color-red); /* Borde azul al enfocar */
-    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.3); /* Sombra de enfoque */
-}
-
-/* Estilos para las etiquetas de los campos */
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
-    font-weight: 600; /* Un poco más de peso para la etiqueta */
-    color: var(--color-text-light); /* Color de texto claro para las etiquetas */
-}
-
-/* Estilos para el mensaje de éxito */
-.success-message {
-    padding: 1rem;
-    background-color: rgba(102, 255, 102, 0.1); /* Fondo verde claro transparente */
-    border: 1px solid #66ff66; /* Borde verde */
-    border-radius: 0.5rem;
-    color: #66ff66; /* Texto verde */
-    text-align: center;
-    font-weight: 500;
-    margin-top: 1rem;
-    max-width: 400px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.success-message.delete-account {
-    background-color: rgba(255, 99, 71, 0.1); /* Fondo rojo claro transparente */
-    border: 1px solid tomato; /* Borde rojo */
-    color: tomato; /* Texto rojo */
-}
-
-/* Estilos para el mensaje de error (ya tienes un color inline, pero esto es por si acaso) */
-.error-message {
-    padding: 0.5rem;
-    background-color: rgba(255, 99, 71, 0.1); /* Fondo rojo claro transparente */
-    border-radius: 0.375rem;
-    color: tomato; /* Rojo para el texto de error */
-    text-align: center;
-    font-weight: 500;
-}
-
-/* Estilo para el texto "¿No tienes cuenta?" */
-.login-form > p {
-    text-align: center;
-    color: var(--color-text-muted);
-    font-size: 0.9rem;
-    margin-top: 0;
-    margin-bottom: 0.5rem; /* Espacio antes del botón de registro */
-}
-
-/* Botón de navegación (Crear un compte nou) */
-.login-form > button:not(.submit-button) {
-    background: transparent;
-    border: none;
-    color: var(--color-red);
-    font-size: 0.9rem;
-    cursor: pointer;
-    padding: 0.5rem;
-    text-align: center;
-    transition: color 0.2s;
-}
-
-.login-form > button:not(.submit-button):hover {
-    color: var(--color-orange); /* Cambiar a morado al pasar el ratón */
-    text-decoration: underline;
-}
-
-/* Botón de "Volver" (back-button) */
-.back-button {
-    align-self: flex-start; /* Colocar a la izquierda */
-    background: none;
-    border: 1px solid var(--color-text-muted);
-    color: var(--color-text-muted);
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    font-size: 0.875rem;
-    transition: all 0.2s;
-    margin-bottom: 1rem;
-}
-
-.back-button:hover {
-    border-color: var(--color-red);
-    color: var(--color-red);
-    transform: translateX(-5px);
-}
-
-/* Asegúrate de que este es el contenedor de la línea: */
-.register-prompt {
-    display: flex; /* Mantiene los elementos en línea */
-    align-items: center; /* Centra verticalmente */
-    justify-content: center; /* Centra el grupo horizontalmente */
-    gap: 0.5rem; /* Espacio entre los elementos */
-    margin-top: 0.5rem;
-    margin-bottom: 1rem;
-}
-
-/* ESENCIAL: Asegura que el párrafo NO fuerce un salto de línea */
-.register-prompt p {
-    margin: 0; /* Elimina márgenes que puedan causar problemas de alineación */
-    color: rgb(173, 178, 233);
-    font-size: 0.9rem;
-    /* Esto es clave para que se comporte como un elemento en línea */
-    display: inline; 
-}
-
-/* Estilo para el botón de navegación (Crear un compte nou) */
-/* Si no usaste 'register-button', usa: .register-prompt button:not(.submit-button) */
-.register-button {
-    background: transparent;
-    border: none;
-    color: var(--color-red);
-    font-size: 0.9rem;
-    cursor: pointer;
-    padding: 0.2rem 0.5rem;
-    text-align: center;
-    transition: color 0.2s;
-    font-weight: 500;
-}
-
-.register-button:hover {
-    color: var(--color-orange);
-    text-decoration: underline;
-}
-
-/* Estilos para alinear el texto "Ja tens compte?" y el botón */
-.register-prompt {
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-    margin-bottom: 1rem;
-}
-
-.register-prompt p {
-    margin: 0;
-    color: var(--color-text-muted);
-    font-size: 0.9rem;
-}
-
-.register-button {
-    background: transparent;
-    border: none;
-    color: var(--color-red);
-    font-size: 0.9rem;
-    cursor: pointer;
-    padding: 0.2rem 0.5rem;
-    transition: color 0.2s;
-    font-weight: 500;
-}
-
-.register-button:hover {
-    color: var(--color-orange);
-    text-decoration: underline;
-}
 
 /* --- Estilos para el Contenedor de Perfil (similar al formulario) --- */
 .profile-display {
@@ -604,4 +443,93 @@ body {
 
 .logout-button:hover:not(:disabled) {
     background: linear-gradient(to right, #991b1b, #7f1d1d); /* Rojo más oscuro al pasar el ratón */
+}
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    background-image: 
+        linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+        url('/datatmp2/joan/tfg_joan/TFG_code/frontend_repCount/src/assets/fons.jpg');
+    background-size: cover;      
+    background-position: center; 
+    background-attachment: fixed;
+    font-family: 'Inter', sans-serif;
+    color: var(--color-text-light);
+}
+
+/* Estilos para alinear el texto "Ja tens compte?" y el botón */
+.register-prompt {
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.register-prompt p {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+}
+
+/* Estilo para el botón de navegación (Crear un compte nou) */
+/* Si no usaste 'register-button', usa: .register-prompt button:not(.submit-button) */
+.register-button {
+    background: transparent;
+    border: none;
+    color: var(--color-red);
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0.2rem 0.5rem;
+    text-align: center;
+    transition: color 0.2s;
+    font-weight: 500;
+}
+
+.register-button:hover {
+    color: var(--color-orange);
+    text-decoration: underline;
+}
+
+
+
+.register-button {
+    background: transparent;
+    border: none;
+    color: var(--color-red);
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0.2rem 0.5rem;
+    transition: color 0.2s;
+    font-weight: 500;
+}
+
+.register-button:hover {
+    color: var(--color-orange);
+    text-decoration: underline;
+}
+
+.top-navbar {
+    width: 100%;
+    background-color: #000000;
+    padding: 15px 0; /* Quitamos padding lateral aquí para usarlo en el contenedor interno */
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    display: flex;
+    justify-content: flex-end; /* Alinea el contenido a la derecha */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    /* Eliminado: margin-right: 50px (Esto causaba que la barra no llegara al final) */
+}
+
+/* Ajuste para que el card no se pegue a la barra */
+.main-wrapper {
+    padding-top: 80px; /* Espacio para que la navbar no tape el contenido */
+    display: flex;
+    justify-content: center;
+    width: 100%;
 }

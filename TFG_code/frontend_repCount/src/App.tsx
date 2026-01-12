@@ -4,7 +4,6 @@ import Register from './Register.tsx';
 import Login from './Login.tsx';
 import History from './History.tsx';
 import UserProfile from './UserProfile.tsx';
-import './App.css'; 
 
 function App() {
   return (

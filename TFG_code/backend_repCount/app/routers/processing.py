@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, File, UploadFile, Form, HTTPException, status, Request # type: ignore
+from fastapi import APIRouter, Depends, File, UploadFile, Form, HTTPException, status, Request, WebSocket, WebSocketDisconnect # type: ignore
 from fastapi.responses import StreamingResponse # type: ignore
 from sqlalchemy.orm import Session # type: ignore
 from ..models.user_model import UserDB, HistoryDB
@@ -11,7 +11,26 @@ import shutil
 import sys
 from ..config import TEMP_UPLOAD_PATH, TEMP_OUTPUT_PATH # type: ignore
 from ..utils import clean_files # type: ignore
+from typing import Dict
+from concurrent.futures import ThreadPoolExecutor
+import asyncio
 
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: Dict[str, WebSocket] = {}
+
+    async def connect(self, client_id: str, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections[client_id] = websocket
+
+    def disconnect(self, client_id: str):
+        if client_id in self.active_connections:
+            del self.active_connections[client_id]
+
+    async def send_progress(self, client_id: str, message: dict):
+        if client_id in self.active_connections:
+            websocket = self.active_connections[client_id]
+            await websocket.send_json(message)
 
 PYTHON_REPCOUNT_PATH = '/datatmp2/joan/tfg_joan/TFG_code/repCount'
 sys.path.append(PYTHON_REPCOUNT_PATH)
@@ -26,19 +45,41 @@ router = APIRouter(
     prefix="/repCount"
 )
 
+manager = ConnectionManager()
+executor = ThreadPoolExecutor()
+
+@router.websocket("/ws/progress/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, client_id: str):
+    await manager.connect(client_id, websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(client_id)
+
 @router.post(
     "/video_processing",
     response_model=VideoProcessResponse,
     status_code=status.HTTP_201_CREATED
 )
 
-def repcount_endpoint(
+async def repcount_endpoint(
     video_file: UploadFile = File(...),
     skip_frames: int = Form(1, ge=1, description="Saltar frames per a processament més ràpid (2 = mantenir 1 de cada 2, 3 = mantenir 1 de cada 3...)"),
     vel_reduction: float = Form(1.0, ge=0, description="Reduïr velocitat de vídeo de sortida"),
+    client_id: str = Form(..., description="ID únic del client per a la connexió WebSocket"),
     current_user: UserDB = Depends(get_current_user),
     db: Session = Depends(get_db)
     ):
+       
+    main_loop = asyncio.get_running_loop()
+    
+    def progress_reporter(percent, status_msg):
+        asyncio.run_coroutine_threadsafe(
+            manager.send_progress(client_id, {"progress": percent, "status": status_msg}),
+            main_loop
+        )
+        
     if not video_file.filename.endswith(('.mp4')):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Introdueix un arxiu de vídeo amb format .mp4")
     
@@ -63,6 +104,9 @@ def repcount_endpoint(
     output_image_path = os.path.join(TEMP_OUTPUT_PATH, output_image_name)
     
     try:
+        
+        loop = asyncio.get_event_loop()
+        
         with open(input_filepath, "wb") as buffer:
             shutil.copyfileobj(video_file.file, buffer)
             
@@ -73,11 +117,12 @@ def repcount_endpoint(
             'output_path_img': output_image_path,
             'output_dir': None,
             'skip_frames': skip_frames,
-            'fps_reduction': vel_reduction
+            'fps_reduction': vel_reduction,
+            'progress_callback': progress_reporter
         }
         
-        count, pred_label = repcount_main(args)
-        
+        count, pred_label = await main_loop.run_in_executor(None, lambda: repcount_main(args))
+
         history_entry = HistoryDB(
             user_id=current_user.id,
             exercise=pred_label,
@@ -102,7 +147,7 @@ def repcount_endpoint(
         
     
     except Exception as e:
-        # 500 Internal Server Error
+        await manager.send_progress(client_id, {"progress": 0, "status": f"Error al processament del vídeo: {str(e)}"})
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al processament del vídeo: {str(e)}"
@@ -213,3 +258,4 @@ def download_file(file_name: str, file_type: str, request: Request, current_user
         media_type=mediatype,
         headers=headers
     )
+        

@@ -589,9 +589,19 @@ def save_video(image_list, output_path_video, output_path_thumbnail, fps):
 
 def repcount_main(args):
     
+    callback = args['progress_callback']
+    
+    if callback:
+        percent = 0
+        callback(percent, "Llegint vídeo")
+        
     print('Processing ', args['input_video_path'])
     
     images, fps_og = extract_images_from_video(args['input_video_path'], args['skip_frames'])
+    
+    if callback:
+        percent = 10
+        callback(percent, "Extracció de pose")
 
     args_pose = {}
 
@@ -609,6 +619,10 @@ def repcount_main(args):
     args_pose['min_conf'] = MIN_CONF
     out_pose = predict_YOLO11_mod.yolo_mod(args_pose)
     
+    if callback:
+        percent = 50
+        callback(percent, "Predint exercici")
+    
     resulting_kpts = out_pose['resulting_kpts']
                       
     resulting_kpts = np.array(resulting_kpts)
@@ -624,6 +638,10 @@ def repcount_main(args):
     args_lstm["model_path"] = LSTM_MODEL_PATH
 
     pred_label, probs = predict_LSTM_mod.lstm_main(args_lstm)
+    
+    if callback:
+        percent = 60
+        callback(percent, "Anàlisi de homografia")
     
     if pred_label == 'bench_press' or pred_label == 'pull_up':
         n_keypoints_used = N_KEYPOINTS_SHORTENED
@@ -641,6 +659,10 @@ def repcount_main(args):
     corrected_kpts, reference_kp_distr, indices = homography_mod.homography_main(args_homography)
 
     # print('probs:', probs)
+    
+    if callback:
+        percent = 70
+        callback(percent, "Anàlisi de repeticions")
     
     cls_idx = CLASSES.index(pred_label)
     
@@ -699,6 +721,10 @@ def repcount_main(args):
     counter_images = []
     count = 0
     i = 0
+    
+    if callback:
+        percent = 80
+        callback(percent, "Generant vídeo")
 
     for img, kps, warped_kpts in zip(images, resulting_kpts, corrected_kpts):
         

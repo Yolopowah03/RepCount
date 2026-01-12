@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
+import './App.css'; 
 
 type ViewMode = 'VIEW' | 'CLOSING_SESSION';
 
@@ -23,8 +25,39 @@ function RepCount(): React.ReactElement {
     const [username, setUsername] = useState<string>('');
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
+    const [clientId] = useState<string>(uuidv4());
+    const [progress, setProgress] = useState<number>(0);
+    const [processingStatus, setProcessingStatus] = useState<string>('');
+    const ws = useRef<WebSocket | null>(null);
+
     const token = localStorage.getItem('access_token');
     const storedUser = localStorage.getItem('username');
+
+    useEffect(() => {
+      ws.current = new WebSocket(`ws://localhost:8080/repCount/ws/progress/${clientId}`);
+
+      setProgress(0);
+      setProcessingStatus('');
+
+      ws.current.onopen = () => {
+        console.log('WebSocket connection opened');
+      };
+
+      ws.current.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.progress !== undefined) {
+          setProgress(data.progress);
+        }
+        if (data.status) {
+          setProcessingStatus(data.status);
+        }
+      };
+
+      return () => {
+        ws.current?.close();
+
+      };
+    }, [clientId]);
   
     // Comprova si l'usuari està loguejat al entrar a la web
     useEffect(() => {
@@ -118,6 +151,8 @@ function RepCount(): React.ReactElement {
   
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
+
+      setProgress(0);
   
       if (!selectedFile) {
         setMessage('Selecciona un vídeo per pujar.');
@@ -133,12 +168,12 @@ function RepCount(): React.ReactElement {
       }
   
       setIsLoading(true);
-      setMessage('Pujant i processant el vídeo...');
+      setMessage('');
       setProcessedVideoUrl(null);
       setProcessedImageUrl(null);
   
       const formData = new FormData();
-  
+      formData.append('client_id', clientId);
       formData.append('video_file', selectedFile as Blob);
 
       //TO DO
@@ -177,6 +212,7 @@ function RepCount(): React.ReactElement {
           setImageName(data.image_name);
           setMessage(`Repeticions comptades: ${data.count}, Exercici: ${data.predicted_exercise}`);
           setError('');
+          setProgress(100);
         } else {
           console.error('Resposta del servidor incompleta:', data);
           throw new Error('Resposta inesperada del servidor.');
@@ -191,6 +227,7 @@ function RepCount(): React.ReactElement {
         }
       } finally {
         setIsLoading(false);
+        setProcessingStatus('');
       }
   
     };
@@ -283,187 +320,202 @@ function RepCount(): React.ReactElement {
     }
 
   return (
-    <div className="card-container">
-      <div className="user-menu-container">
-        {isLoggedIn ? (
-          <div
-            onMouseEnter={() => setShowMenu(true)}
-            onMouseLeave={() => setShowMenu(false)}
-          >
-
-            <button 
-            onClick={() => setShowMenu(!showMenu)} 
-            className="username-button"
-            title="Usuari"
+    <div className="main-wrapper">
+      <nav className="top-navbar">
+        <div className="user-menu-container">
+          {isLoggedIn ? (
+            <div
+              onMouseEnter={() => setShowMenu(true)}
+              onMouseLeave={() => setShowMenu(false)}
             >
-              <span style={{ marginRight: '20px' }}>👤</span> 
-              {username} 
-              <span style={{ fontSize: '12px', marginLeft: '5px', marginRight: '50px'}}>▼</span>
-            </button>
 
-            {showMenu && (
-              <div className="menu">
-                <button 
-                  className="menu-item" 
-                  onClick={() => navigate('/UserProfile')}
-                > 
-                  Opcions
-                </button>
-                <button 
-                  className="menu-item" 
-                  onClick={() => navigate('/History')}
-                > 
-                  Historial
-                </button>
-                <button 
-                  className="menu-item" 
-                  onClick={() => switchMode('CLOSING_SESSION')}
-                > 
-                  Tancar Sessió 
-                </button>
-              </div>
-            )}
-          </div> 
-          ) : (
-            <div className="auth-buttons-container">
               <button 
-                className="btn-secondary" 
-                onClick={() => navigate('/login')}
+              onClick={() => setShowMenu(!showMenu)} 
+              className="username-button"
+              title="Usuari"
               >
-                Inicia Sessió
+                <span style={{ marginRight: '20px' }}></span> 
+                {username} 
+                <span style={{ fontSize: '12px', marginLeft: '5px', marginRight: '50px'}}>▼</span>
               </button>
-              <button 
-                className="btn-primary" 
-                onClick={() => navigate('/register')}
-              >
-                Registra't
-              </button>
-            </div>
-          )}
-      </div>
 
-      {viewMode === 'VIEW' && (
-        <div>
-            <h1 className="gradient-title"> RepCount </h1>
-            <p className="description-text">
-              Puja un video, i et comptarem les repeticions d'exercicis que has fet!
-            </p>
-
-            <form onSubmit={handleSubmit} className="form-centered">
-              <div className="form-group">
-                <label htmlFor="video-upload">
-                  Selecciona el teu video:
-                </label>
-                <input
-                  id="video-upload"
-                  type="file"
-                  accept="video/*"
-                  onChange={handleFileChange}
-                  className="file-input"
-                />
-              </div>
-              <button type="submit"
-              disabled={isLoading || !selectedFile}
-              className="submit-button">
-                {isLoading ? 
-                    'Processant...'
-                : 
-                  'Comptar Repeticions'
-                }
-              </button>
-            </form>
-
-            {message && (
-              <p className="message-text">
-                {message}
-              </p>
-            )}
-
-          {(previewUrl || processedVideoUrl || processedImageUrl) && (
-          <div className="media-container">
-          <div className="video-results">
-
-            {(previewUrl) && (
-              <div className="video-box">
-                <h2 className="original-title">Vista Previa (Original)</h2>
-                <video 
-                  key={previewUrl}
-                  width="100%"
-                  controls
+              {showMenu && (
+                <div className="menu">
+                  <button 
+                    className="menu-item" 
+                    onClick={() => navigate('/UserProfile')}
+                  > 
+                    Opcions
+                  </button>
+                  <button 
+                    className="menu-item" 
+                    onClick={() => navigate('/History')}
+                  > 
+                    Historial
+                  </button>
+                  <button 
+                    className="menu-item" 
+                    onClick={() => switchMode('CLOSING_SESSION')}
+                  > 
+                    Tancar Sessió 
+                  </button>
+                </div>
+              )}
+            </div> 
+            ) : (
+              <div className="auth-buttons-container">
+                <button 
+                  className="btn-secondary" 
+                  onClick={() => navigate('/login')}
                 >
-                  <source src={previewUrl} type={selectedFile?.type || 'video/mp4'} />
-                  El teu navegador no soporta el format del vídeo.
-                </video>
-              </div> )}
-          
-            {processedVideoUrl && (
-              <div className="video-output">
+                  Inicia Sessió
+                </button>
+                <button 
+                  className="btn-primary" 
+                  onClick={() => navigate('/register')}
+                >
+                  Registra't
+                </button>
+              </div>
+            )}
+        </div>
+      </nav>
+
+      <div className="card-container"> 
+        {viewMode === 'VIEW' && (
+          <div>
+              <h1 className="gradient-title"> RepCount </h1>
+
+              <h2 className="gradient-subtitle"> Reconeixement d'exercici i comptador automàtic de repeticions per Visió per Computador </h2>
+
+              <p className="description-text">
+                Puja un video, i et comptarem les repeticions d'exercicis que has fet!
+              </p>
+
+              <form onSubmit={handleSubmit} className="form-centered">
+                <div className="form-group">
+                  <label htmlFor="video-upload">
+                    Selecciona el teu vídeo:
+                  </label>
+                  <input
+                    id="video-upload"
+                    type="file"
+                    accept="video/*"
+                    onChange={handleFileChange}
+                    className="file-input"
+                  />
+                </div>
+
+                {isLoading ? (
+                  <div style={{ width: '100%', maxWidth: '300px', margin: '0 auto' }}>
+                    <p style={{ marginBottom: '5px', fontSize: '0.9rem', color: '#555' }}>
+                      {processingStatus || 'Processant...'} ({progress}%)
+                    </p>
+                    <div style={{width: '100%', backgroundColor: '#e0e0e0', borderRadius: '8px', overflow: 'hidden', height: '10px'}} >
+                      <div style={{ width: `${progress}%`, backgroundColor: '#4caf50', height: '100%', transition: 'width 0.3s ease-in-out'}} />
+                    </div>
+                  </div>
+                ) : (
+                  <button type="submit"
+                  disabled={!selectedFile}
+                  className="submit-button">
+                      Comptar Repeticions
+                  </button>
+                )}
+              </form>
+
+              {!isLoading && message && (
+                <p className="message-text">
+                  {message}
+                </p>
+              )}
+
+            {(previewUrl || processedVideoUrl || processedImageUrl) && (
+            <div className="media-container">
+            <div className="video-results">
+
+              {(previewUrl) && (
                 <div className="video-box">
-                  <h2 className="original-title">Vídeo Processat</h2>
-                  <video
-                    key={processedVideoUrl}
+                  <h2 className="original-title">Vista Previa (Original)</h2>
+                  <video 
+                    key={previewUrl}
                     width="100%"
                     controls
-                    autoPlay
-                    muted
                   >
-                    <source src={processedVideoUrl} type={"video/mp4"} />
-                    El teu navegador no suporta el format del vídeo.
+                    <source src={previewUrl} type={selectedFile?.type || 'video/mp4'} />
+                    El teu navegador no soporta el format del vídeo.
                   </video>
+                </div> )}
+            
+              {processedVideoUrl && (
+                <div className="video-output">
+                  <div className="video-box">
+                    <h2 className="original-title">Vídeo Processat</h2>
+                    <video
+                      key={processedVideoUrl}
+                      width="100%"
+                      controls
+                      autoPlay
+                      muted
+                    >
+                      <source src={processedVideoUrl} type={"video/mp4"} />
+                      El teu navegador no suporta el format del vídeo.
+                    </video>
+                  </div>
+                  <button
+                    onClick={() => handleDownloadVideo()}
+                    style={{ fontSize: '0.9rem', padding: '5px 10px' }}
+                    className="submit-button" 
+                  >
+                    Descarrega Vídeo
+                  </button>
                 </div>
-                <button
-                  onClick={() => handleDownloadVideo()}
-                  style={{ fontSize: '0.9rem', padding: '5px 10px' }}
-                  className="submit-button" 
-                >
-                  Descarrega Vídeo
-                </button>
-              </div>
-            )}
+              )}
 
-            {processedImageUrl && (
-              <div className="image-output">
-                <h3>Anàlisi de la repetició</h3>
-                <img
-                  src={processedImageUrl}
-                  alt="Anàlisi de la repetició"
-                  width="100%"
-                  style={{ borderRadius: '8px', border: '1px solid #ddd' }}
-                />
-                <button
-                  onClick={() => handleDownloadImage()}
-                  className="submit-button" style={{ fontSize: '0.9rem', padding: '5px 10px' }}
-                >
-                  Descarrega Imatge
-                </button>
-              </div>
+              {processedImageUrl && (
+                <div className="image-output">
+                  <h3>Anàlisi de la repetició</h3>
+                  <img
+                    src={processedImageUrl}
+                    alt="Anàlisi de la repetició"
+                    width="100%"
+                    style={{ borderRadius: '8px', border: '1px solid #ddd' }}
+                  />
+                  <button
+                    onClick={() => handleDownloadImage()}
+                    className="submit-button" style={{ fontSize: '0.9rem', padding: '5px 10px' }}
+                  >
+                    Descarrega Imatge
+                  </button>
+                </div>
+              )}
+            </div>
+            </div>
             )}
           </div>
-          </div>
-          )}
-        </div>
-      
-    )}
-
-      {viewMode === 'CLOSING_SESSION' && (
-        <div style={{textAlign: 'center'}}>
-          <p>Vols tancar sessió?</p>
-
-          <button className="submit-button logout-button" 
-            onClick={handleLogOut}
-            >
-            Tancar Sessió
-          </button>
-
-          <button onClick={() => switchMode('VIEW')} className="submit-button"
-            style={{marginTop: '0.5rem', background: 'transparent', border: '1px solid var(--color-text-muted)'}}
-            > Cancel·lar
-          </button>
-        </  div>
+        
       )}
 
-      {error && <p className="error-message" style={{color: 'red'}}>{error}</p>}
+        {viewMode === 'CLOSING_SESSION' && (
+          <div style={{textAlign: 'center'}}>
+            <p>Vols tancar sessió?</p>
 
+            <button className="submit-button logout-button" 
+              onClick={handleLogOut}
+              >
+              Tancar Sessió
+            </button>
+
+            <button onClick={() => switchMode('VIEW')} className="submit-button"
+              style={{marginTop: '0.5rem', background: 'transparent', border: '1px solid var(--color-text-muted)'}}
+              > Cancel·lar
+            </button>
+          </  div>
+        )}
+
+        {error && <p className="error-message" style={{color: 'red'}}>{error}</p>}
+
+      </div>
     </div>
   );
 }

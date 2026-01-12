@@ -36,6 +36,36 @@ const fetchUserHistory = async (token: string): Promise<HistoryItem[]> => {
     return data;
 };
 
+const HistoryItemRow = ({ item, token }: { item: HistoryItem, token: string | null }) => {
+    
+    const [isImageLoaded, setIsImageLoaded] = useState<boolean>(false);
+
+    return (
+      <li 
+        key={item.id}
+        className="history-item"
+        style={{
+          display: isImageLoaded ? 'flex' : 'none',
+          transition: 'opacity 0.3s ease-in-out',
+        }}
+      > 
+        <img
+          src={`${base_URL}${item.thumbnail_name}/image?token=${token}`}
+          alt="Thumbnail"
+          style={{ maxWidth: '250px', maxHeight: '250px'}}
+          onLoad={() => setIsImageLoaded(true)}
+        />
+          <div className="history-date-box">
+              <span className="history-date">{new Date(item.timestamp).toLocaleString()}</span>
+          </div>
+          <div className="history-details">
+              <h3>{item.exercise}</h3>
+              <p>Repeticions: {item.rep_count}</p>
+          </div>
+      </li>
+    );
+};
+
 function History(): React.ReactElement {
   const navigate = useNavigate();
 
@@ -140,16 +170,7 @@ function History(): React.ReactElement {
                 {historyList.length > 0 ? (
                     <ul className="history-list">
                         {historyList.map((item) => (
-                            <li key={item.id} className="history-item">
-                              <img src={`${base_URL}${item.thumbnail_name}/image?token=${token}`} alt="Thumbnail" style={{maxWidth: '250px', maxHeight: '250px'}} />
-                                <div className="history-date-box">
-                                    <span className="history-date">{new Date(item.timestamp).toLocaleString()}</span>
-                                </div>
-                                <div className="history-details">
-                                    <h3>{item.exercise}</h3>
-                                    <p>Repeticions: {item.rep_count}</p>
-                                </div>
-                            </li>
+                            <HistoryItemRow key={item.id} item={item} token={token} />
                         ))}
                     </ul>
                 ) :(<p> No hi ha entrades a l'historial.</p>
