@@ -6,35 +6,43 @@ import matplotlib.pyplot as plt
 import os
 import subprocess
 
-PYTHON_LSTM_PATH = '/datatmp2/joan/tfg_joan/TFG_code/LSTM'
-PYTHON_YOLO_PATH = '/datatmp2/joan/tfg_joan/TFG_code/YOLO_pose'
-PYTHON_HOMOGRAPHY_PATH = '/datatmp2/joan/tfg_joan/TFG_code/Homography'
+# Importació de mòduls 
+
+PYTHON_LSTM_PATH = '/datatmp2/joan/repCount/TFG_code/LSTM'
+PYTHON_YOLO_PATH = '/datatmp2/joan/repCount/TFG_code/YOLO_pose'
+PYTHON_HOMOGRAPHY_PATH = '/datatmp2/joan/repCount/TFG_code/Homography'
 
 for p in (PYTHON_LSTM_PATH, PYTHON_YOLO_PATH, PYTHON_HOMOGRAPHY_PATH):
     if p not in sys.path:
         sys.path.append(p)
-        
-importlib.invalidate_caches()
 
 import predict_LSTM_mod # type: ignore
 import predict_YOLO11_mod # type: ignore
 import homography_mod # type: ignore
 
+# Classes d'exercicis disponibles
+
 CLASSES = ['bench_press', 'deadlift', 'squat', 'pull_up']
+
+# Per a deadlift i squat s'utilitzen els 17 keypoints, per a bench_press i pull_up només 13
+# Ja que a bench_press i pull_up només el tors es visualitza
+
 N_KEYPOINTS_TOTAL = 17
 N_KEYPOINTS_SHORTENED = 13
 
-#YOLO
-YOLO_MODEL_PATH='/datatmp2/joan/tfg_joan/models_YOLO11_pose/yolo11m-pose.pt'
+# Configuració YOLO
+YOLO_MODEL_PATH='/datatmp2/joan/repCount/models_YOLO11_pose/yolo11m-pose.pt'
 VALID_GPU_ID = 3
 SAVE_FRAMES = False
 SAVE_JSON = False
 MIN_CONF = 0.15
 
-#LSTM 
-LSTM_MODEL_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_17_RepCount1.pth'
+# Configuració LSTM
+LSTM_MODEL_PATH = '/datatmp2/joan/repCount/models_LSTM/LSTM_17_RepCount1.pth'
 VEL = True
 SEQ_LEN = 80
+
+# Configuració per a dibuix de keypoints i esquelet
 
 COCO_KPTS_COLORS = [
     [51, 153, 255],   # 0: nose
@@ -96,7 +104,7 @@ COCO_SKELETON_INFO_13 = {
     14: dict(link=(4, 6), id=18, color=[51, 153, 255])
 }
 
-#KEYPOINT INDEX:
+# Índex de keypoints:
 
 # 0: nose
 # 1: left_eye
@@ -117,6 +125,15 @@ COCO_SKELETON_INFO_13 = {
 # 16: right_ankle
 
 def extract_images_from_video(video_path, skip_frames):
+    """
+    Extrau les imatges d'un vídeo donat un cert salt de frames.
+    Args:
+        video_path (str): Ruta al fitxer de vídeo.
+        skip_frames (int): Nombre de frames a saltar entre cada imatge extreta.
+    Returns:
+        images (list): Llista d'imatges extretes del vídeo.
+        fps_og (float): Frames per segon originals del vídeo.
+    """
     
     images = []
     idx = 0
@@ -143,10 +160,22 @@ def extract_images_from_video(video_path, skip_frames):
     return images, fps_og
 
 def draw_keypoints(image, kpts, kpt_colors, skeleton_info, kpt_thr=0.3, radius=3, thickness=2):
+    """
+    Dibuixa els keypoints i l'esquelet sobre una imatge.
+    Args:
+        image (ndarray): Imatge sobre la qual es dibuixaran els keypoints.
+        kpts (ndarray): Array de keypoints amb forma (N, 2), on N és el nombre de keypoints.
+        kpt_colors (list): Llista de colors per a cada keypoint.
+        skeleton_info (dict): Diccionari amb informació de l'esquelet.
+        kpt_thr (float): Llindar de confiança per dibuixar els keypoints.
+        radius (int): Radi dels cercles que representen els keypoints.
+        thickness (int): Gruix de les línies que representen l'esquelet.
+    Returns:
+        image (ndarray): Imatge amb els keypoints i l'esquelet dibuixats.
+    """
     
     for kid, kpt in sorted(enumerate(kpts)):
-        # print(kpt)
-
+        
         color = kpt_colors[kid]
         if not isinstance(color, str):
             color = tuple(int(c) for c in color[::-1])
@@ -167,6 +196,14 @@ def draw_keypoints(image, kpts, kpt_colors, skeleton_info, kpt_thr=0.3, radius=3
     return image
 
 def draw_counter(image, count):
+    """
+    Dibuixa el comptador de repeticions a la imatge.
+    Args:
+        image (ndarray): Imatge sobre la qual es dibuixarà el comptador.
+        count (int): Nombre de repeticions a mostrar.
+    Returns:
+        image (ndarray): Imatge amb el comptador dibuixat.
+    """
     font = cv.FONT_ITALIC
     text = f'RepCount: {count}'
     text_position = (100, 100) 
@@ -199,26 +236,17 @@ def draw_counter(image, count):
     
     return image
 
-# def get_angle(x0, y0, x1, y1, x2, y2):
-    
-#     # x0: Intersecció
-    
-#     v1 = (x1-x0, y1-y0)
-#     v2 = (x2-x0, y2-y0)
-    
-#     dot = v1[0]*v2[0] + v1[1]*v2[1]
-    
-#     mag_v1 = np.sqrt(v1[0]**2 + v1[1]**2)
-#     mag_v2 = np.sqrt(v2[0]**2 + v2[1]**2)
-    
-#     cos_theta = dot / (mag_v1 * mag_v2)
-    
-#     theta = math.acos(cos_theta)
-#     theta_deg = math.degrees(theta)
-    
-#     return theta_deg
 
-def create_histogram(history, history_swiftened, save_path, counts, counts_end, pred_label):
+def pose_analysis(history, history_swiftened, save_path, counts, counts_end, pred_label):
+
+    """
+    Crea gràfic sobreel moviment de la repetició al llarg dels frames d'un vídeo
+    Args:
+        history (list): Llista amb els valors de distància euclidiana per a cada frame.
+        save_path (str): Ruta on es desarà el gràfic.
+        counts (list): Llista amb els frames on es comptabilitzen repeticions completes.
+        pred_label (str): Etiqueta de l'exercici predit.
+    """
     
     fig, ax = plt.subplots(1, 1, figsize=(10, 5), dpi=100)
     
@@ -242,6 +270,20 @@ def create_histogram(history, history_swiftened, save_path, counts, counts_end, 
     plt.savefig(save_path)
 
 def repcount_bench_press(keypoints, skip_frames):
+    """
+    Troba instants on es completen les repeticions. Utilitza la distància euclidiana entre canells i espatlles.
+    Busca la posició inicial de la repetició i es comptabilitza en retornar a aquesta, afegint un suavitzat per
+    controlar soroll a l'estimació de pose.
+    Args:
+        keypoints (list): Llista de diccionaris amb els keypoints per a cada frame.
+        skip_frames (int): Nombre de frames a saltar entre cada imatge extreta.
+    Returns:
+        timestamps (list): Llista amb els frames on es comptabilitzen repeticions completes.
+        timestamps_end (list): Llista amb els frames on es detecta el final de la repetició.
+        distance_history (list): Llista amb els valors de distància euclidiana per a cada frame.
+        distance_history_swiftened (list): Llista amb els valors de distància euclidiana suavitzats per a cada frame.
+    
+    """
 
     #PLA: Canells, espatlles
     
@@ -288,15 +330,11 @@ def repcount_bench_press(keypoints, skip_frames):
         if initialPosition is None:
             initialPosition = {}
             initialPosition['wrist_shoulder_dist'] = wrist_shoulder_dist
-            # print('Initial Position arm_dist:')
-            # print(initialPosition)
             
         else:
            # Actualitzar initial positions si es troben millors
             if wrist_shoulder_dist > initialPosition['wrist_shoulder_dist'] and end_rep == False:
                 initialPosition['wrist_shoulder_dist'] = wrist_shoulder_dist
-                # print('Initial Position:')
-                # print(initialPosition)
                 
             #Trobar quan es retorna a la posició inicial
             if wrist_shoulder_dist >= (initialPosition['wrist_shoulder_dist'] * 0.9):
@@ -306,9 +344,6 @@ def repcount_bench_press(keypoints, skip_frames):
                         timer += 15
                     
                 end_rep = False
-
-            # print('Extended arm dist:')
-            # print(wrist_shoulder_dist)
                 
             #Trobar fi de repetició
             
@@ -316,10 +351,24 @@ def repcount_bench_press(keypoints, skip_frames):
                 timestamps_end.append(i)
                 end_rep = True
                     
-    # print('timestamps_initial', timestamps_initial)
     return timestamps, timestamps_end, distance_history, distance_history_swiftened
     
 def repcount_deadlift(keypoints, skip_frames):
+    
+    """
+    Troba instants on es completen les repeticions. Utilitza la distància euclidiana entre mans i peus.
+    Busca la posició inicial de la repetició i es comptabilitza en retornar a aquesta, afegint un suavitzat per
+    controlar soroll a l'estimació de pose.
+    Args:
+        keypoints (list): Llista de diccionaris amb els keypoints per a cada frame.
+        skip_frames (int): Nombre de frames a saltar entre cada imatge extreta.
+    Returns:
+        timestamps (list): Llista amb els frames on es comptabilitzen repeticions completes.
+        timestamps_end (list): Llista amb els frames on es detecta el final de la repetició.
+        distance_history (list): Llista amb els valors de distància euclidiana per a cada frame.
+        distance_history_swiftened (list): Llista amb els valors de distància euclidiana suavitzats per a cada frame.
+    
+    """
 
     #PLA: Mans, peus
     # Initial Position: Mans agafant la barra del terra
@@ -365,16 +414,12 @@ def repcount_deadlift(keypoints, skip_frames):
         if initialPosition is None:
             initialPosition = {}
             initialPosition['wrist_ankle_dist'] = wrist_ankle_dist
-            # print('Initial Position arm_dist:')
-            # print(initialPosition)
 
             
         else: 
             # Actualitzar initial positions si es troben millors
             if wrist_ankle_dist < initialPosition['wrist_ankle_dist'] and end_rep == False:
-                initialPosition['wrist_ankle_dist'] = wrist_ankle_dist
-                # print('Initial Position:')
-                # print(initialPosition)                
+                initialPosition['wrist_ankle_dist'] = wrist_ankle_dist           
             #Trobar quan es retorna a la posició inicial
             if wrist_ankle_dist <= (initialPosition['wrist_ankle_dist'] * 1.15):
                 if end_rep == True:
@@ -384,8 +429,6 @@ def repcount_deadlift(keypoints, skip_frames):
                     
                 end_rep = False
 
-            # print('Wrist-hip dist:')
-            # print(wrist_hip_dist)
                 
             #Trobar fi de repetició
             
@@ -393,10 +436,24 @@ def repcount_deadlift(keypoints, skip_frames):
                 timestamps_end.append(i)
                 end_rep = True
                     
-    # print('timestamps_initial', timestamps_initial)
     return timestamps, timestamps_end, distance_history, distance_history_swiftened
     
 def repcount_squat(keypoints, skip_frames):
+    
+    """
+    Troba instants on es completen les repeticions. Utilitza la distància euclidiana entre espatlles i genolls.
+    Busca la posició inicial de la repetició i es comptabilitza en retornar a aquesta, afegint un suavitzat per
+    controlar soroll a l'estimació de pose.
+    Args:
+        keypoints (list): Llista de diccionaris amb els keypoints per a cada frame.
+        skip_frames (int): Nombre de frames a saltar entre cada imatge extreta.
+    Returns:
+        timestamps (list): Llista amb els frames on es comptabilitzen repeticions completes.
+        timestamps_end (list): Llista amb els frames on es detecta el final de la repetició.
+        distance_history (list): Llista amb els valors de distància euclidiana per a cada frame.
+        distance_history_swiftened (list): Llista amb els valors de distància euclidiana suavitzats per a cada frame.
+    
+    """
     
     #PLA: Espatlles, genolls
     
@@ -444,16 +501,12 @@ def repcount_squat(keypoints, skip_frames):
             initialPosition = {}
             initialPosition['frame'] = i
             initialPosition['knee_shoulder_dist'] = knee_shoulder_dist
-            # print('Initial Position arm_dist:')
-            # print(initialPosition)
             
         else:
            # Actualitzar initial positions si es troben millors
             if knee_shoulder_dist > initialPosition['knee_shoulder_dist'] and end_rep == False:
                 initialPosition['frame'] = i
                 initialPosition['knee_shoulder_dist'] = knee_shoulder_dist
-                # print('Initial Position:')
-                # print(initialPosition)
                 
             #Trobar quan es retorna a la posició inicial
             if knee_shoulder_dist >= (initialPosition['knee_shoulder_dist'] * 0.875):
@@ -465,8 +518,6 @@ def repcount_squat(keypoints, skip_frames):
                     
                 end_rep = False
 
-            # print('Extended arm dist:')
-            # print(wrist_shoulder_dist)
                 
             #Trobar fi de repetició
             
@@ -474,10 +525,24 @@ def repcount_squat(keypoints, skip_frames):
                 timestamps_end.append(i)
                 end_rep = True
                     
-    # print('timestamps_initial', timestamps_initial)
     return timestamps, timestamps_end, distance_history, distance_history_swiftened
 
 def repcount_pull_up(keypoints, skip_frames):
+    
+    """
+    Troba instants on es completen les repeticions. Utilitza la distància euclidiana entre canells i espatlles.
+    Busca la posició inicial de la repetició i es comptabilitza en retornar a aquesta, afegint un suavitzat per
+    controlar soroll a l'estimació de pose.
+    Args:
+        keypoints (list): Llista de diccionaris amb els keypoints per a cada frame.
+        skip_frames (int): Nombre de frames a saltar entre cada imatge extreta.
+    Returns:
+        timestamps (list): Llista amb els frames on es comptabilitzen repeticions completes.
+        timestamps_end (list): Llista amb els frames on es detecta el final de la repetició.
+        distance_history (list): Llista amb els valors de distància euclidiana per a cada frame.
+        distance_history_swiftened (list): Llista amb els valors de distància euclidiana suavitzats per a cada frame.
+    
+    """
     
     #PLA: Canells, espatlles
     
@@ -517,15 +582,11 @@ def repcount_pull_up(keypoints, skip_frames):
         if initialPosition is None:
             initialPosition = {}
             initialPosition['wrist_shoulder_dist'] = wrist_shoulder_dist
-            # print('Initial Position arm_dist:')
-            # print(initialPosition)
             
         else:
            # Actualitzar initial positions si es troben millors
             if wrist_shoulder_dist > initialPosition['wrist_shoulder_dist'] and end_rep == False:
                 initialPosition['wrist_shoulder_dist'] = wrist_shoulder_dist
-                # print('Initial Position dist:')
-                # print(wrist_shoulder_dist)
                 
                 
             #Trobar quan es retorna a la posició inicial
@@ -537,8 +598,6 @@ def repcount_pull_up(keypoints, skip_frames):
                     
                 end_rep = False
 
-            # print('Extended arm dist:')
-            # print(wrist_shoulder_dist)
                 
             #Trobar fi de repetició
             
@@ -546,10 +605,17 @@ def repcount_pull_up(keypoints, skip_frames):
                 timestamps_end.append(i)
                 end_rep = True
                     
-    # print('timestamps_initial', timestamps_initial)
     return timestamps, timestamps_end, distance_history, distance_history_swiftened
 
 def save_video(image_list, output_path_video, output_path_thumbnail, fps):
+    """
+    Desa una llista d'imatges com un fitxer de vídeo MP4 utilitzant ffmpeg per a la compressió.
+    Args:
+        image_list (list): Llista d'imatges (ndarray) a desar com a vídeo.
+        output_path_video (str): Ruta on es desarà el fitxer de vídeo.
+        output_path_thumbnail (str): Ruta on es desarà la miniatura (primer frame).
+        fps (float): Frames per segon del vídeo de sortida.
+    """
     
     height, width, layers = image_list[0].shape
     frame_size = (width, height)
@@ -588,21 +654,30 @@ def save_video(image_list, output_path_video, output_path_thumbnail, fps):
             os.remove(temp_path)
 
 def repcount_main(args):
+    """
+    Funció principal per al recompte de repeticions a partir d'un vídeo d'entrada.
     
+    """
     callback = args['progress_callback']
     
+    # Señal de progrés per a mostrar a l'usuari
     if callback:
         percent = 0
         callback(percent, "Llegint vídeo")
         
     print('Processing ', args['input_video_path'])
     
+    # Extracció de frames del vídeo d'entrada
     images, fps_og = extract_images_from_video(args['input_video_path'], args['skip_frames'])
     
+    # Señal de progrés per a mostrar a l'usuari
     if callback:
         percent = 10
         callback(percent, "Extracció de pose")
+        
+    ## 1. PREDICCIÓ DE POSE AMB YOLOv11
 
+    # Configuració i execució de la predicció de pose amb el model YOLOv11
     args_pose = {}
 
     args_pose["model_path"] = YOLO_MODEL_PATH
@@ -619,14 +694,20 @@ def repcount_main(args):
     args_pose['min_conf'] = MIN_CONF
     out_pose = predict_YOLO11_mod.yolo_mod(args_pose)
     
+    # Señal de progrés per a mostrar a l'usuari
     if callback:
         percent = 50
         callback(percent, "Predint exercici")
     
+    #Resultat de la predicció de pose amb keypoints per cada frame
     resulting_kpts = out_pose['resulting_kpts']
                       
     resulting_kpts = np.array(resulting_kpts)
     resulting_kpts = resulting_kpts.reshape(-1, N_KEYPOINTS_TOTAL, 2)
+    
+    ## 2. PREDICCIÓ D'EXERCICI AMB LSTM
+    
+    # Configuració i execució de la predicció de l'exercici amb el model LSTM
     
     args_lstm = {}
       
@@ -636,12 +717,19 @@ def repcount_main(args):
     args_lstm["classes"] = CLASSES
     args_lstm["n_keypoints"] = N_KEYPOINTS_TOTAL
     args_lstm["model_path"] = LSTM_MODEL_PATH
+    
+    # Predicció resultant d'exercici pel model LSTM
 
     pred_label, probs = predict_LSTM_mod.lstm_main(args_lstm)
     
+    ## 3. TRANSFORMACIÓ DE KEYPOINTS PER HOMOGRAFIA
+    
+    # Señal de progrés per a mostrar a l'usuari
     if callback:
         percent = 60
         callback(percent, "Anàlisi de homografia")
+    
+    # Segons l'exercici predit, es redueixen els keypoints a utilitzar per a l'homografia
     
     if pred_label == 'bench_press' or pred_label == 'pull_up':
         n_keypoints_used = N_KEYPOINTS_SHORTENED
@@ -649,22 +737,29 @@ def repcount_main(args):
     else:
         n_keypoints_used = N_KEYPOINTS_TOTAL 
     
+    # Configuració de la transformació de keypoints per homografia
+    
     args_homography = {}
     
     args_homography['keypoints'] = resulting_kpts
     args_homography['n_keypoints'] = n_keypoints_used
     args_homography['class_name'] = pred_label
     args_homography['img_shape'] = images[0].shape[:2]
+    
+    # Obtenció de keypoints transformats i de punts de referència sobre els que se realitza la transformació
 
     corrected_kpts, reference_kp_distr, indices = homography_mod.homography_main(args_homography)
-
-    # print('probs:', probs)
     
+    # Señal de progrés per a mostrar a l'usuari
     if callback:
         percent = 70
         callback(percent, "Anàlisi de repeticions")
     
     cls_idx = CLASSES.index(pred_label)
+    
+    ## 4. RECOMPTE DE REPETICIONS SEGONS L'EXERCICI PREDIT
+    
+    # Conversió dels keypoints a diccionaris per facilitar l'ús en les funcions de recompte de repeticions
     
     kpts_dict_list = []
     for frame_kpts in corrected_kpts:
@@ -692,6 +787,8 @@ def repcount_main(args):
             kpts_dict['right_ankle'] = frame_kpts[16]
 
         kpts_dict_list.append(kpts_dict)
+        
+    # Comptatge de repeticions amb diferents funcions segons l'exercici predit
     
     match(cls_idx):
         case 0:
@@ -722,9 +819,12 @@ def repcount_main(args):
     count = 0
     i = 0
     
+    # Señal de progrés per a mostrar a l'usuari
     if callback:
         percent = 80
         callback(percent, "Generant vídeo")
+        
+    ## 5. GENERACIÓ DEL VÍDEO DE SORTIDA I GRÀFICS
 
     for img, kps, warped_kpts in zip(images, resulting_kpts, corrected_kpts):
         
@@ -753,7 +853,7 @@ def repcount_main(args):
         
     hist_save_path = args['output_path_img']
         
-    create_histogram(distance_history, distance_history_swiftened, hist_save_path, time_labels, time_labels_end, pred_label)
+    pose_analysis(distance_history, distance_history_swiftened, hist_save_path, time_labels, time_labels_end, pred_label)
     
     print('Saved histogram at:', hist_save_path)
             

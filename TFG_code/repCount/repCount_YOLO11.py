@@ -10,9 +10,9 @@ import subprocess
 
 time_count = time.time()
 
-PYTHON_LSTM_PATH = '/datatmp2/joan/tfg_joan/TFG_code/LSTM'
-PYTHON_YOLO_PATH = '/datatmp2/joan/tfg_joan/TFG_code/YOLO_pose'
-PYTHON_HOMOGRAPHY_PATH = '/datatmp2/joan/tfg_joan/TFG_code/Homography'
+PYTHON_LSTM_PATH = '/datatmp2/joan/repCount/TFG_code/LSTM'
+PYTHON_YOLO_PATH = '/datatmp2/joan/repCount/TFG_code/YOLO_pose'
+PYTHON_HOMOGRAPHY_PATH = '/datatmp2/joan/repCount/TFG_code/Homography'
 
 for p in (PYTHON_LSTM_PATH, PYTHON_YOLO_PATH, PYTHON_HOMOGRAPHY_PATH):
     if p not in sys.path:
@@ -22,9 +22,9 @@ import predict_LSTM_mod # type: ignore
 import predict_YOLO11_mod # type: ignore
 import homography_mod # type: ignore
 
-VIDEO_PATH = '/datatmp2/joan/tfg_joan/videos/train/pull_up/train_pull_up_013.mp4'
-OUTPUT_DIR_POSE = "/datatmp2/joan/tfg_joan/results/pose/pull_up/pull_up_test_013"
-OUTPUT_PATH_VIDEO = "/datatmp2/joan/tfg_joan/results/repCount/repcount_pull_up_test_013.mp4"
+VIDEO_PATH = '/datatmp2/joan/repCount/videos/train/pull_up/train_pull_up_013.mp4'
+OUTPUT_DIR_POSE = "/datatmp2/joan/repCount/results/pose/pull_up/pull_up_test_013"
+OUTPUT_PATH_VIDEO = "/datatmp2/joan/repCount/results/repCount/repcount_pull_up_test_013.mp4"
 
 CLASSES = ['bench_press', 'deadlift', 'squat', 'pull_up']
 N_KEYPOINTS_TOTAL = 17
@@ -32,18 +32,18 @@ N_KEYPOINTS_SHORTENED = 13
 SKIP_FRAMES = 1
 FPS_REDUCTION = 1
 
-# PRE_LOADED_JSON_DIR = '/datatmp2/joan/tfg_joan/results/repcount'
-PRE_LOADED_JSON_DIR = '/datatmp2/joan/tfg_joan/results/YOLO_pose/repcount_bench_press11'
+# PRE_LOADED_JSON_DIR = '/datatmp2/joan/repCount/results/repcount'
+PRE_LOADED_JSON_DIR = '/datatmp2/joan/repCount/results/YOLO_pose/repcount_bench_press11'
 
 #YOLO
-YOLO_MODEL_PATH='/datatmp2/joan/tfg_joan/models_YOLO11_pose/yolo11m-pose.pt'
+YOLO_MODEL_PATH='/datatmp2/joan/repCount/models_YOLO11_pose/yolo11m-pose.pt'
 VALID_GPU_ID = 3
 SAVE_FRAMES = False
 SAVE_JSON = False
 MIN_CONF = 0.15
 
 #LSTM 
-LSTM_MODEL_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_17_RepCount2.pth'
+LSTM_MODEL_PATH = '/datatmp2/joan/repCount/models_LSTM/LSTM_17_RepCount2.pth'
 VEL = True
 SEQ_LEN = 80
 

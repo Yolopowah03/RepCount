@@ -4,31 +4,31 @@ import sys
 import json
 import numpy as np
 import math
-PYTHON_POSE_PATH = "/datatmp2/joan/tfg_joan/sapiens/lite/demo"
+PYTHON_POSE_PATH = "/datatmp2/joan/repCount/sapiens/lite/demo"
 sys.path.append(PYTHON_POSE_PATH)
-PYTHON_LSTM_PATH = '/datatmp2/joan/tfg_joan/TFG_code/LSTM'
+PYTHON_LSTM_PATH = '/datatmp2/joan/repCount/TFG_code/LSTM'
 sys.path.append(PYTHON_LSTM_PATH)
 import vis_pose_mod # type: ignore
 from vis_pose_mod import vis_pose_main # type: ignore
 import predict_LSTM_mod # type: ignore
 from predict_LSTM_mod import lstm_main # type: ignore
 
-# VIDEO_PATH = '/datatmp2/joan/tfg_joan/videos/test/squat/bench_press_1.mp4'
-VIDEO_PATH = '/datatmp2/joan/tfg_joan/videos/test/bench_press/bench_press_1.mp4'
+# VIDEO_PATH = '/datatmp2/joan/repCount/videos/test/squat/bench_press_1.mp4'
+VIDEO_PATH = '/datatmp2/joan/repCount/videos/test/bench_press/bench_press_1.mp4'
 
-# OUTPUT_DIR="/datatmp2/joan/tfg_joan/results/repcount"
-OUTPUT_DIR="/datatmp2/joan/tfg_joan/results/repcount_bench_press_1"
+# OUTPUT_DIR="/datatmp2/joan/repCount/results/repcount"
+OUTPUT_DIR="/datatmp2/joan/repCount/results/repcount_bench_press_1"
 
-POSE_CHECKPOINT='/datatmp2/joan/tfg_joan/sapiens/sapiens_lite_host/torchscript/pose/checkpoints/sapiens_1b/sapiens_1b_coco_best_coco_AP_821_torchscript.pt2'
-DETECTION_CONFIG_FILE='/datatmp2/joan/tfg_joan/sapiens/pose/demo/mmdetection_cfg/rtmdet_m_640-8xb32_coco-person_no_nms.py'
-DETECTION_CHECKPOINT='/datatmp2/joan/tfg_joan/sapiens/sapiens_lite_host/torchscript/detector/checkpoints/rtmpose/rtmdet_m_8xb32-100e_coco-obj365-person-235e8209.pth'
+POSE_CHECKPOINT='/datatmp2/joan/repCount/sapiens/sapiens_lite_host/torchscript/pose/checkpoints/sapiens_1b/sapiens_1b_coco_best_coco_AP_821_torchscript.pt2'
+DETECTION_CONFIG_FILE='/datatmp2/joan/repCount/sapiens/pose/demo/mmdetection_cfg/rtmdet_m_640-8xb32_coco-person_no_nms.py'
+DETECTION_CHECKPOINT='/datatmp2/joan/repCount/sapiens/sapiens_lite_host/torchscript/detector/checkpoints/rtmpose/rtmdet_m_8xb32-100e_coco-obj365-person-235e8209.pth'
 
 CLASSES = ['bench_press', 'deadlift', 'squat', 'pull_up']
 
-LSTM_MODEL_PATH = '/datatmp2/joan/tfg_joan/models_LSTM/LSTM_RepCount1.pth'
+LSTM_MODEL_PATH = '/datatmp2/joan/repCount/models_LSTM/LSTM_RepCount1.pth'
 
-# PRE_LOADED_JSON_DIR = '/datatmp2/joan/tfg_joan/results/repcount'
-PRE_LOADED_JSON_DIR = '/datatmp2/joan/tfg_joan/results/repcount_bench_press_1'
+# PRE_LOADED_JSON_DIR = '/datatmp2/joan/repCount/results/repcount'
+PRE_LOADED_JSON_DIR = '/datatmp2/joan/repCount/results/repcount_bench_press_1'
 
 #Sapiens
 LINE_THICKNESS=2

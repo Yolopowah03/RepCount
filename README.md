@@ -1,6 +1,29 @@
+<img src="TFG_code/frontend_repCount/src/assets/train_pull_up_001.gif" width="400">
+
+<img src="TFG_code/frontend_repCount/src/assets/video_example.gif" width="400">
+
+<img src="TFG_code/frontend_repCount/src/assets/graph_example.jpg" width="400">
+
+## Descripció
+
+La Visió per Computador ofereix noves eines que poden aportar millores i més precisió d'anàlisi i arbitratge als esports professionals, amb mètodes com la Estimació de Pose i el reconeixement automàtic d'accions. L'objectiu en aquest projecte és que a partir d'un vídeo d'exercici pujat a la web per l'usuari, la eina desenvolupada sigui capaç de identificar l'exercici i comptar les repeticions que es realitzen. Per a reconèixer l'acció de l'usuari, s'utilitza una xarxa LSTM, entrenada amb el model Sapiens d'estimació de pose de Meta. Per al comptatge de repeticions s'utilitza Estimació de Pose amb YOLOv11 i una transformació per homografia per adaptar l'angle de càmera. La eina és accessible a través de un navegador web, i aquesta ha estat desenvolupada en un entorn frontend React amb una API backend FastAPI. La característica principal en aquesta eina és la seva robustesa a la variació d'angle de gravació, que permet un comptatge precís amb una tolerància gran a les variacions introduïdes per l'usuari al vídeo d'entrada.
+
+Computer Vision offers new tools that can add improvements and more precise analysis and refereeing to professional sports, with methods such as Pose Estimation and automatic action recognition. This project's purpose is that from an exercise video uploaded to the web by the user, the developed tool is capable of identifying the exercise and counting the repetitions made. To recognize the user's action, an LSTM Network is utilized, trained by Meta's Sapiens Pose Estimation model. For repetition counting, YOLOv11 Pose Estimation is used, along with an homography transformation to adapt the camera's angle. The tool is accessible through a web browser, and it has been developed using a React frontend environment and a backend API FastAPI. The project's main feature is its robustness to the camera angle variation, that allows for an accurate counting with high tolerance to variations introduced by the user in the input video.
+
+## Inicialització
+
+# Backend
+
+uvicorn TFG_code.backend_repCount.app.main:app --host=0.0.0.0 --port=8080
+
+# Frontend
+
+cd TFG_code/frontend_repCount
+npm run dev -- --port 8079 --host
+
 ## 📁 Estructura del projecte
 
-El pipeline principal del proyecte es pot trobar a ./TFG_code/repCount/repCount_YOLO11_web.py
+El pipeline principal del projecte es pot trobar a ./TFG_code/repCount/repCount_YOLO11_web.py
 
 ```
 .
@@ -79,10 +102,6 @@ El pipeline principal del proyecte es pot trobar a ./TFG_code/repCount/repCount_
 
 ```
 
-#TODO: Instrucciones montar datasets (básico) y ejecutar web
+Joan Lara Formoso
 
-#TODO: Poner ejemplo ejecución
-
-#TODO: Poner descripción proyecto
-
-#TODO: Comentar repCount.py
+TFG en Enginyeria Informàtica - Universitat Autònoma de Barcelona

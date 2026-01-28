@@ -32,7 +32,7 @@ class ConnectionManager:
             websocket = self.active_connections[client_id]
             await websocket.send_json(message)
 
-PYTHON_REPCOUNT_PATH = '/datatmp2/joan/tfg_joan/TFG_code/repCount'
+PYTHON_REPCOUNT_PATH = '/datatmp2/joan/repCount/TFG_code/repCount'
 sys.path.append(PYTHON_REPCOUNT_PATH)
 
 try:
