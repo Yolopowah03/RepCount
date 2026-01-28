@@ -1,8 +1,14 @@
-<img src="TFG_code/frontend_repCount/src/assets/train_pull_up_001.gif" width="400">
+<p align="center">
+<img src="TFG_code/frontend_repCount/src/assets/train_pull_up_001.gif" width="500">
+</p>
 
-<img src="TFG_code/frontend_repCount/src/assets/video_example.gif" width="400">
+<p align="center">
+<img src="TFG_code/frontend_repCount/src/assets/video_example.gif" width="500">
+</p>
 
-<img src="TFG_code/frontend_repCount/src/assets/graph_example.jpg" width="400">
+<p align="center">
+<img src="TFG_code/frontend_repCount/src/assets/graph_example.jpg" width="500">
+</p>
 
 ## Descripció
 
@@ -12,11 +18,11 @@ Computer Vision offers new tools that can add improvements and more precise anal
 
 ## Inicialització
 
-# Backend
+### Backend
 
 uvicorn TFG_code.backend_repCount.app.main:app --host=0.0.0.0 --port=8080
 
-# Frontend
+### Frontend
 
 cd TFG_code/frontend_repCount
 npm run dev -- --port 8079 --host
