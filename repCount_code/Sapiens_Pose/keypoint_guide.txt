@@ -1,0 +1,19 @@
+COCO_KPTS_COLORS = [
+    [51, 153, 255],   # 0: nose
+    [51, 153, 255],   # 1: left_eye
+    [51, 153, 255],   # 2: right_eye
+    [51, 153, 255],   # 3: left_ear
+    [51, 153, 255],   # 4: right_ear
+    [0, 255, 0],      # 5: left_shoulder
+    [255, 128, 0],    # 6: right_shoulder
+    [0, 255, 0],      # 7: left_elbow
+    [255, 128, 0],    # 8: right_elbow
+    [0, 255, 0],      # 9: left_wrist
+    [255, 128, 0],    # 10: right_wrist
+    [0, 255, 0],      # 11: left_hip
+    [255, 128, 0],    # 12: right_hip
+    [0, 255, 0],      # 13: left_knee
+    [255, 128, 0],    # 14: right_knee
+    [0, 255, 0],      # 15: left_ankle
+    [255, 128, 0],    # 16: right_ankle
+]
