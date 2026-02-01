@@ -237,12 +237,13 @@ def draw_counter(image, count):
     return image
 
 
-def pose_analysis(history, history_swiftened, save_path, counts, counts_end, pred_label):
+def pose_analysis(history, history_smoothened, save_path, counts, counts_end, pred_label):
 
     """
     Crea gràfic sobreel moviment de la repetició al llarg dels frames d'un vídeo
     Args:
         history (list): Llista amb els valors de distància euclidiana per a cada frame.
+        history_smoothened (list): Llista amb els valors de distància euclidiana suavitzats per a cada frame.
         save_path (str): Ruta on es desarà el gràfic.
         counts (list): Llista amb els frames on es comptabilitzen repeticions completes.
         pred_label (str): Etiqueta de l'exercici predit.
@@ -250,10 +251,12 @@ def pose_analysis(history, history_swiftened, save_path, counts, counts_end, pre
     
     fig, ax = plt.subplots(1, 1, figsize=(10, 5), dpi=100)
     
+    print(max(history_smoothened))
+    
     plt.subplots_adjust(hspace=0.4)
-    ax.plot(history, label='Distància euclidiana', color='red', linewidth=1)    
-    ax.set_xlim(0, len(history))
-    ax.set_ylim(0, max(history))
+    ax.plot(history_smoothened, label='Distància euclidiana', color='red', linewidth=1)    
+    ax.set_xlim(0, len(history_smoothened))
+    ax.set_ylim(0, max(history_smoothened))
     
     for count in counts:
         ax.axvline(x=count, color='green', linewidth=2)
@@ -281,7 +284,7 @@ def repcount_bench_press(keypoints, skip_frames):
         timestamps (list): Llista amb els frames on es comptabilitzen repeticions completes.
         timestamps_end (list): Llista amb els frames on es detecta el final de la repetició.
         distance_history (list): Llista amb els valors de distància euclidiana per a cada frame.
-        distance_history_swiftened (list): Llista amb els valors de distància euclidiana suavitzats per a cada frame.
+        distance_history_smoothened (list): Llista amb els valors de distància euclidiana suavitzats per a cada frame.
     
     """
 
@@ -295,7 +298,7 @@ def repcount_bench_press(keypoints, skip_frames):
     initialPosition = None
     end_rep = False
     timer = 0
-    distance_history_swiftened = []
+    distance_history_smoothened = []
     distance_history = []
     first_dist = 0
     
@@ -313,18 +316,18 @@ def repcount_bench_press(keypoints, skip_frames):
         
         distance_history.append(wrist_shoulder_dist)
         
-        if len(distance_history_swiftened) < 5:
-            distance_history_swiftened.append(wrist_shoulder_dist)
+        if len(distance_history_smoothened) < 5:
+            distance_history_smoothened.append(wrist_shoulder_dist)
             
-        elif len(distance_history_swiftened) >= 5 and first_dist == 0 and wrist_shoulder_dist < 300:
+        elif first_dist == 0 and wrist_shoulder_dist < 300:
             first_dist = wrist_shoulder_dist
-            distance_history_swiftened.append(wrist_shoulder_dist)
+            distance_history_smoothened.append(wrist_shoulder_dist)
             
-        elif wrist_shoulder_dist > (first_dist*2.25):
-            distance_history_swiftened.append(distance_history_swiftened[-1])
+        elif wrist_shoulder_dist > (max(distance_history_smoothened[-50:])*1.25) or wrist_shoulder_dist < min(distance_history_smoothened[-50:])*0.75:
+            distance_history_smoothened.append(distance_history_smoothened[-1])
             continue
         else:
-            distance_history_swiftened.append(wrist_shoulder_dist)
+            distance_history_smoothened.append(wrist_shoulder_dist)
         
         # Trobar primera InitialPosition 
         if initialPosition is None:
@@ -351,7 +354,7 @@ def repcount_bench_press(keypoints, skip_frames):
                 timestamps_end.append(i)
                 end_rep = True
                     
-    return timestamps, timestamps_end, distance_history, distance_history_swiftened
+    return timestamps, timestamps_end, distance_history, distance_history_smoothened
     
 def repcount_deadlift(keypoints, skip_frames):
     
@@ -366,7 +369,7 @@ def repcount_deadlift(keypoints, skip_frames):
         timestamps (list): Llista amb els frames on es comptabilitzen repeticions completes.
         timestamps_end (list): Llista amb els frames on es detecta el final de la repetició.
         distance_history (list): Llista amb els valors de distància euclidiana per a cada frame.
-        distance_history_swiftened (list): Llista amb els valors de distància euclidiana suavitzats per a cada frame.
+        distance_history_smoothened (list): Llista amb els valors de distància euclidiana suavitzats per a cada frame.
     
     """
 
@@ -379,7 +382,7 @@ def repcount_deadlift(keypoints, skip_frames):
     initialPosition = None
     end_rep = False
     timer = 0
-    distance_history_swiftened = []
+    distance_history_smoothened = []
     distance_history = []
     first_dist = 0
     
@@ -397,18 +400,18 @@ def repcount_deadlift(keypoints, skip_frames):
         
         distance_history.append(wrist_ankle_dist)
         
-        if len(distance_history_swiftened) < 5:
-            distance_history_swiftened.append(wrist_ankle_dist)
+        if len(distance_history_smoothened) < 5:
+            distance_history_smoothened.append(wrist_ankle_dist)
             
-        elif len(distance_history_swiftened) >= 5 and first_dist == 0 and wrist_ankle_dist < 400:
+        elif first_dist == 0 and wrist_ankle_dist < 400:
             first_dist = wrist_ankle_dist
-            distance_history_swiftened.append(wrist_ankle_dist)
+            distance_history_smoothened.append(wrist_ankle_dist)
             
-        elif wrist_ankle_dist < (first_dist*0.4):
-            distance_history_swiftened.append(distance_history_swiftened[-1])
+        elif wrist_ankle_dist < min(distance_history_smoothened[-50:])*0.75 or wrist_ankle_dist > (max(distance_history_smoothened[-50:])*1.25):
+            distance_history_smoothened.append(distance_history_smoothened[-1])
             continue
         else:
-            distance_history_swiftened.append(wrist_ankle_dist)
+            distance_history_smoothened.append(wrist_ankle_dist)
         
         # Trobar primera InitialPosition 
         if initialPosition is None:
@@ -436,7 +439,7 @@ def repcount_deadlift(keypoints, skip_frames):
                 timestamps_end.append(i)
                 end_rep = True
                     
-    return timestamps, timestamps_end, distance_history, distance_history_swiftened
+    return timestamps, timestamps_end, distance_history, distance_history_smoothened
     
 def repcount_squat(keypoints, skip_frames):
     
@@ -451,7 +454,7 @@ def repcount_squat(keypoints, skip_frames):
         timestamps (list): Llista amb els frames on es comptabilitzen repeticions completes.
         timestamps_end (list): Llista amb els frames on es detecta el final de la repetició.
         distance_history (list): Llista amb els valors de distància euclidiana per a cada frame.
-        distance_history_swiftened (list): Llista amb els valors de distància euclidiana suavitzats per a cada frame.
+        distance_history_smoothened (list): Llista amb els valors de distància euclidiana suavitzats per a cada frame.
     
     """
     
@@ -465,7 +468,7 @@ def repcount_squat(keypoints, skip_frames):
     initialPosition = None
     end_rep = False
     timer = 0
-    distance_history_swiftened = []
+    distance_history_smoothened = []
     distance_history = []
     first_dist = 0
     
@@ -483,18 +486,18 @@ def repcount_squat(keypoints, skip_frames):
         
         distance_history.append(knee_shoulder_dist)
         
-        if len(distance_history_swiftened) < 5:
-            distance_history_swiftened.append(knee_shoulder_dist)
+        if len(distance_history_smoothened) < 5:
+            distance_history_smoothened.append(knee_shoulder_dist)
             
-        elif len(distance_history_swiftened) >= 5 and first_dist == 0 and knee_shoulder_dist < 300:
+        elif first_dist == 0 and knee_shoulder_dist < 300:
             first_dist = knee_shoulder_dist
-            distance_history_swiftened.append(knee_shoulder_dist)
+            distance_history_smoothened.append(knee_shoulder_dist)
             
-        elif knee_shoulder_dist > (first_dist*2.25):
-            distance_history_swiftened.append(distance_history_swiftened[-1])
+        elif knee_shoulder_dist > max(distance_history_smoothened[-50:])*1.25 or knee_shoulder_dist < min(distance_history_smoothened[-50:])*0.75:
+            distance_history_smoothened.append(distance_history_smoothened[-1])
             continue
         else:
-            distance_history_swiftened.append(knee_shoulder_dist)
+            distance_history_smoothened.append(knee_shoulder_dist)
         
         # Trobar primera InitialPosition 
         if initialPosition is None:
@@ -525,7 +528,7 @@ def repcount_squat(keypoints, skip_frames):
                 timestamps_end.append(i)
                 end_rep = True
                     
-    return timestamps, timestamps_end, distance_history, distance_history_swiftened
+    return timestamps, timestamps_end, distance_history, distance_history_smoothened
 
 def repcount_pull_up(keypoints, skip_frames):
     
@@ -540,7 +543,7 @@ def repcount_pull_up(keypoints, skip_frames):
         timestamps (list): Llista amb els frames on es comptabilitzen repeticions completes.
         timestamps_end (list): Llista amb els frames on es detecta el final de la repetició.
         distance_history (list): Llista amb els valors de distància euclidiana per a cada frame.
-        distance_history_swiftened (list): Llista amb els valors de distància euclidiana suavitzats per a cada frame.
+        distance_history_smoothened (list): Llista amb els valors de distància euclidiana suavitzats per a cada frame.
     
     """
     
@@ -554,7 +557,7 @@ def repcount_pull_up(keypoints, skip_frames):
     initialPosition = None
     end_rep = False
     timer = 0
-    distance_history_swiftened = []
+    distance_history_smoothened = []
     distance_history = []
     first_dist = 0
     
@@ -571,12 +574,15 @@ def repcount_pull_up(keypoints, skip_frames):
         wrist_shoulder_dist = (wrist_shoulder_distL + wrist_shoulder_distR) / 2
         distance_history.append(wrist_shoulder_dist)
         
-        if len(distance_history_swiftened) < 5:
-            distance_history_swiftened.append(wrist_shoulder_dist)
-        elif wrist_shoulder_dist < (max(distance_history_swiftened)*1.2):
-            distance_history_swiftened.append(wrist_shoulder_dist)
+        if len(distance_history_smoothened) < 5:
+            distance_history_smoothened.append(wrist_shoulder_dist)
+        elif first_dist == 0 and wrist_shoulder_dist < 300:
+            first_dist = wrist_shoulder_dist
+            distance_history_smoothened.append(wrist_shoulder_dist)
+        elif wrist_shoulder_dist > max(distance_history_smoothened[-50:])*1.25 or wrist_shoulder_dist < min(distance_history_smoothened[-50:])*0.75:
+            distance_history_smoothened.append(distance_history_smoothened[-1])
         else:
-            continue
+            distance_history_smoothened.append(wrist_shoulder_dist)
         
         # Trobar primera InitialPosition 
         if initialPosition is None:
@@ -605,7 +611,7 @@ def repcount_pull_up(keypoints, skip_frames):
                 timestamps_end.append(i)
                 end_rep = True
                     
-    return timestamps, timestamps_end, distance_history, distance_history_swiftened
+    return timestamps, timestamps_end, distance_history, distance_history_smoothened
 
 def save_video(image_list, output_path_video, output_path_thumbnail, fps):
     """
@@ -794,23 +800,23 @@ def repcount_main(args):
         case 0:
             print('Predicted exercise: Bench Press')
             
-            time_labels, time_labels_end, distance_history, distance_history_swiftened = repcount_bench_press(kpts_dict_list, args['skip_frames'])
+            time_labels, time_labels_end, distance_history, distance_history_smoothened = repcount_bench_press(kpts_dict_list, args['skip_frames'])
             print('RepCount:', time_labels)
             
         case 1:
             print('Predicted exercise: Deadlift')
             
-            time_labels, time_labels_end, distance_history, distance_history_swiftened = repcount_deadlift(kpts_dict_list, args['skip_frames'])
+            time_labels, time_labels_end, distance_history, distance_history_smoothened = repcount_deadlift(kpts_dict_list, args['skip_frames'])
             
         case 2:
             print('Predicted exercise: Squat')
 
-            time_labels, time_labels_end, distance_history, distance_history_swiftened = repcount_squat(kpts_dict_list, args['skip_frames'])
+            time_labels, time_labels_end, distance_history, distance_history_smoothened = repcount_squat(kpts_dict_list, args['skip_frames'])
 
         case 3:
             print('Predicted exercise: Pull Up')
 
-            time_labels, time_labels_end, distance_history, distance_history_swiftened = repcount_pull_up(kpts_dict_list, args['skip_frames'])
+            time_labels, time_labels_end, distance_history, distance_history_smoothened = repcount_pull_up(kpts_dict_list, args['skip_frames'])
             
         case _:
             print('Error: Unknown class index')
@@ -853,7 +859,7 @@ def repcount_main(args):
         
     hist_save_path = args['output_path_img']
         
-    pose_analysis(distance_history, distance_history_swiftened, hist_save_path, time_labels, time_labels_end, pred_label)
+    pose_analysis(distance_history, distance_history_smoothened, hist_save_path, time_labels, time_labels_end, pred_label)
     
     print('Saved histogram at:', hist_save_path)
             
