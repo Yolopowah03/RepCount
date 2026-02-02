@@ -5,6 +5,7 @@ import importlib
 import matplotlib.pyplot as plt
 import os
 import subprocess
+import time
 
 # Importació de mòduls 
 
@@ -251,8 +252,6 @@ def pose_analysis(history, history_smoothened, save_path, counts, counts_end, pr
     
     fig, ax = plt.subplots(1, 1, figsize=(10, 5), dpi=100)
     
-    print(max(history_smoothened))
-    
     plt.subplots_adjust(hspace=0.4)
     ax.plot(history_smoothened, label='Distància euclidiana', color='red', linewidth=1)    
     ax.set_xlim(0, len(history_smoothened))
@@ -316,7 +315,7 @@ def repcount_bench_press(keypoints, skip_frames):
         
         distance_history.append(wrist_shoulder_dist)
         
-        if len(distance_history_smoothened) < 5:
+        if len(distance_history_smoothened) < 5 and wrist_shoulder_dist < 400:
             distance_history_smoothened.append(wrist_shoulder_dist)
             
         elif first_dist == 0 and wrist_shoulder_dist < 300:
@@ -325,7 +324,6 @@ def repcount_bench_press(keypoints, skip_frames):
             
         elif wrist_shoulder_dist > (max(distance_history_smoothened[-50:])*1.25) or wrist_shoulder_dist < min(distance_history_smoothened[-50:])*0.75:
             distance_history_smoothened.append(distance_history_smoothened[-1])
-            continue
         else:
             distance_history_smoothened.append(wrist_shoulder_dist)
         
@@ -344,13 +342,13 @@ def repcount_bench_press(keypoints, skip_frames):
                 if end_rep == True:
                     if timer <= 0 and i > 30:
                         timestamps.append(i)
-                        timer += 15
+                        timer += 45
                     
                 end_rep = False
                 
             #Trobar fi de repetició
             
-            if end_rep == False and wrist_shoulder_dist <= (initialPosition['wrist_shoulder_dist'] * 0.65):
+            if end_rep == False and wrist_shoulder_dist <= (initialPosition['wrist_shoulder_dist'] * 0.7):
                 timestamps_end.append(i)
                 end_rep = True
                     
@@ -400,16 +398,15 @@ def repcount_deadlift(keypoints, skip_frames):
         
         distance_history.append(wrist_ankle_dist)
         
-        if len(distance_history_smoothened) < 5:
+        if len(distance_history_smoothened) < 5 and wrist_ankle_dist < 400:
             distance_history_smoothened.append(wrist_ankle_dist)
             
-        elif first_dist == 0 and wrist_ankle_dist < 400:
+        elif first_dist == 0 :
             first_dist = wrist_ankle_dist
             distance_history_smoothened.append(wrist_ankle_dist)
             
         elif wrist_ankle_dist < min(distance_history_smoothened[-50:])*0.75 or wrist_ankle_dist > (max(distance_history_smoothened[-50:])*1.25):
             distance_history_smoothened.append(distance_history_smoothened[-1])
-            continue
         else:
             distance_history_smoothened.append(wrist_ankle_dist)
         
@@ -428,7 +425,7 @@ def repcount_deadlift(keypoints, skip_frames):
                 if end_rep == True:
                     if timer <= 0 and i > 30:
                         timestamps.append(i)
-                        timer += 15
+                        timer += 45
                     
                 end_rep = False
 
@@ -486,7 +483,7 @@ def repcount_squat(keypoints, skip_frames):
         
         distance_history.append(knee_shoulder_dist)
         
-        if len(distance_history_smoothened) < 5:
+        if len(distance_history_smoothened) < 5 and knee_shoulder_dist < 400:
             distance_history_smoothened.append(knee_shoulder_dist)
             
         elif first_dist == 0 and knee_shoulder_dist < 300:
@@ -495,7 +492,6 @@ def repcount_squat(keypoints, skip_frames):
             
         elif knee_shoulder_dist > max(distance_history_smoothened[-50:])*1.25 or knee_shoulder_dist < min(distance_history_smoothened[-50:])*0.75:
             distance_history_smoothened.append(distance_history_smoothened[-1])
-            continue
         else:
             distance_history_smoothened.append(knee_shoulder_dist)
         
@@ -517,7 +513,7 @@ def repcount_squat(keypoints, skip_frames):
                 if end_rep == True:
                     if timer <= 0 and i > 30:
                         timestamps.append(i)
-                        timer += 15
+                        timer += 45
                     
                 end_rep = False
 
@@ -574,7 +570,7 @@ def repcount_pull_up(keypoints, skip_frames):
         wrist_shoulder_dist = (wrist_shoulder_distL + wrist_shoulder_distR) / 2
         distance_history.append(wrist_shoulder_dist)
         
-        if len(distance_history_smoothened) < 5:
+        if len(distance_history_smoothened) < 5 and wrist_shoulder_dist < 400:
             distance_history_smoothened.append(wrist_shoulder_dist)
         elif first_dist == 0 and wrist_shoulder_dist < 300:
             first_dist = wrist_shoulder_dist
@@ -600,7 +596,7 @@ def repcount_pull_up(keypoints, skip_frames):
                 if end_rep == True:
                     if timer <= 0 and i > 30:
                         timestamps.append(i)
-                        timer += 15
+                        timer += 45
                     
                 end_rep = False
 
@@ -664,6 +660,9 @@ def repcount_main(args):
     Funció principal per al recompte de repeticions a partir d'un vídeo d'entrada.
     
     """
+    
+    time1 = time.time()
+    
     callback = args['progress_callback']
     
     # Señal de progrés per a mostrar a l'usuari
@@ -675,6 +674,8 @@ def repcount_main(args):
     
     # Extracció de frames del vídeo d'entrada
     images, fps_og = extract_images_from_video(args['input_video_path'], args['skip_frames'])
+    
+    print(f'Extracted {len(images)} images from video at {fps_og} fps.')
     
     # Señal de progrés per a mostrar a l'usuari
     if callback:
@@ -830,6 +831,11 @@ def repcount_main(args):
         percent = 80
         callback(percent, "Generant vídeo")
         
+    time_processing = time.time() - time1
+        
+    print("Processing time (s):")
+    print(time_processing)
+        
     ## 5. GENERACIÓ DEL VÍDEO DE SORTIDA I GRÀFICS
 
     for img, kps, warped_kpts in zip(images, resulting_kpts, corrected_kpts):
@@ -868,5 +874,9 @@ def repcount_main(args):
     print('Saved output at:', args['output_path_video'])
     
     print('Total reps counted:', count)
+    
+    total_time = time.time() - time1
+    
+    print("Total time (s):", total_time)
     
     return count, pred_label
