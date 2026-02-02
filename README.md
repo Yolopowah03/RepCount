@@ -5,6 +5,10 @@ La Visió per Computador ofereix noves eines que poden aportar millores i més p
 Computer Vision offers new tools that can add improvements and more precise analysis and refereeing to professional sports, with methods such as Pose Estimation and automatic action recognition. This project's purpose is that from an exercise video uploaded to the web by the user, the developed tool is capable of identifying the exercise and counting the repetitions made. To recognize the user's action, an LSTM Network is utilized, trained by Meta's Sapiens Pose Estimation model. For repetition counting, YOLOv11 Pose Estimation is used, along with an homography transformation to adapt the camera's angle. The tool is accessible through a web browser, and it has been developed using a React frontend environment and a backend API FastAPI. The project's main feature is its robustness to the camera angle variation, that allows for an accurate counting with high tolerance to variations introduced by the user in the input video.
 
 <p align="center">
+<img src="documents/Poster_TFG_RepCount.png" width="750">
+</p>
+
+<p align="center">
 <img src="repCount_code/frontend_repCount/src/assets/train_pull_up_001.gif" width="500">
 </p>
 
