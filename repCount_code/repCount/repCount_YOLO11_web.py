@@ -322,8 +322,9 @@ def repcount_bench_press(keypoints, skip_frames):
             first_dist = wrist_shoulder_dist
             distance_history_smoothened.append(wrist_shoulder_dist)
             
-        elif wrist_shoulder_dist > (max(distance_history_smoothened[-50:])*1.25) or wrist_shoulder_dist < min(distance_history_smoothened[-50:])*0.75:
+        elif wrist_shoulder_dist > (max(distance_history_smoothened)*1.25) or wrist_shoulder_dist < min(distance_history_smoothened)*0.75:
             distance_history_smoothened.append(distance_history_smoothened[-1])
+            continue
         else:
             distance_history_smoothened.append(wrist_shoulder_dist)
         
@@ -338,7 +339,7 @@ def repcount_bench_press(keypoints, skip_frames):
                 initialPosition['wrist_shoulder_dist'] = wrist_shoulder_dist
                 
             #Trobar quan es retorna a la posició inicial
-            if wrist_shoulder_dist >= (initialPosition['wrist_shoulder_dist'] * 0.9):
+            if wrist_shoulder_dist >= (initialPosition['wrist_shoulder_dist'] * 0.85):
                 if end_rep == True:
                     if timer <= 0 and i > 30:
                         timestamps.append(i)
@@ -348,7 +349,7 @@ def repcount_bench_press(keypoints, skip_frames):
                 
             #Trobar fi de repetició
             
-            if end_rep == False and wrist_shoulder_dist <= (initialPosition['wrist_shoulder_dist'] * 0.7):
+            if end_rep == False and wrist_shoulder_dist <= (initialPosition['wrist_shoulder_dist'] * 0.75):
                 timestamps_end.append(i)
                 end_rep = True
                     
@@ -398,15 +399,16 @@ def repcount_deadlift(keypoints, skip_frames):
         
         distance_history.append(wrist_ankle_dist)
         
-        if len(distance_history_smoothened) < 5 and wrist_ankle_dist < 400:
+        if len(distance_history_smoothened) < 5 and wrist_ankle_dist < 400 and wrist_ankle_dist > 50:
             distance_history_smoothened.append(wrist_ankle_dist)
             
-        elif first_dist == 0 :
+        elif first_dist == 0 and wrist_ankle_dist < 400 and wrist_ankle_dist > 50:
             first_dist = wrist_ankle_dist
             distance_history_smoothened.append(wrist_ankle_dist)
             
-        elif wrist_ankle_dist < min(distance_history_smoothened[-50:])*0.75 or wrist_ankle_dist > (max(distance_history_smoothened[-50:])*1.25):
+        elif wrist_ankle_dist < min(distance_history_smoothened)*0.75 or wrist_ankle_dist > (max(distance_history_smoothened)*1.25):
             distance_history_smoothened.append(distance_history_smoothened[-1])
+            continue
         else:
             distance_history_smoothened.append(wrist_ankle_dist)
         
@@ -419,9 +421,12 @@ def repcount_deadlift(keypoints, skip_frames):
         else: 
             # Actualitzar initial positions si es troben millors
             if wrist_ankle_dist < initialPosition['wrist_ankle_dist'] and end_rep == False:
-                initialPosition['wrist_ankle_dist'] = wrist_ankle_dist           
+                initialPosition['wrist_ankle_dist'] = wrist_ankle_dist         
+                
+            print('Initial pos wrist_ankle_dist:', initialPosition['wrist_ankle_dist'])
+                  
             #Trobar quan es retorna a la posició inicial
-            if wrist_ankle_dist <= (initialPosition['wrist_ankle_dist'] * 1.15):
+            if wrist_ankle_dist <= (initialPosition['wrist_ankle_dist'] * 1.5):
                 if end_rep == True:
                     if timer <= 0 and i > 30:
                         timestamps.append(i)
@@ -432,7 +437,7 @@ def repcount_deadlift(keypoints, skip_frames):
                 
             #Trobar fi de repetició
             
-            if end_rep == False and wrist_ankle_dist >= (initialPosition['wrist_ankle_dist'] * 1.4):
+            if end_rep == False and wrist_ankle_dist >= (initialPosition['wrist_ankle_dist'] * 1.65):
                 timestamps_end.append(i)
                 end_rep = True
                     
@@ -490,8 +495,9 @@ def repcount_squat(keypoints, skip_frames):
             first_dist = knee_shoulder_dist
             distance_history_smoothened.append(knee_shoulder_dist)
             
-        elif knee_shoulder_dist > max(distance_history_smoothened[-50:])*1.25 or knee_shoulder_dist < min(distance_history_smoothened[-50:])*0.75:
+        elif knee_shoulder_dist > max(distance_history_smoothened)*1.25 or knee_shoulder_dist < min(distance_history_smoothened)*0.75:
             distance_history_smoothened.append(distance_history_smoothened[-1])
+            continue
         else:
             distance_history_smoothened.append(knee_shoulder_dist)
         
@@ -575,8 +581,9 @@ def repcount_pull_up(keypoints, skip_frames):
         elif first_dist == 0 and wrist_shoulder_dist < 300:
             first_dist = wrist_shoulder_dist
             distance_history_smoothened.append(wrist_shoulder_dist)
-        elif wrist_shoulder_dist > max(distance_history_smoothened[-50:])*1.25 or wrist_shoulder_dist < min(distance_history_smoothened[-50:])*0.75:
+        elif wrist_shoulder_dist > max(distance_history_smoothened)*1.25 or wrist_shoulder_dist < min(distance_history_smoothened)*0.75:
             distance_history_smoothened.append(distance_history_smoothened[-1])
+            continue
         else:
             distance_history_smoothened.append(wrist_shoulder_dist)
         
