@@ -37,7 +37,7 @@ El pipeline principal del projecte es pot trobar a ./repCount_code/repCount/repC
 
 ```
 .
-├── documents # Paper, pòster i presentació en format PDF amb totes les seves versions entregades
+├── documents # Paper i pòster en format PDF amb totes les seves versions entregades
 ├── exercise_dataset_seg # Dataset per a entrenament i prova de model de segmentació de màscara YOLO11seg
 ├── LSTM_dataset # Dataset per a entrenament i prova de model LSTM de classificació d'exercici
 ├── models_exercise_seg # Models entrenats de segmentació de màscara YOLO11seg
