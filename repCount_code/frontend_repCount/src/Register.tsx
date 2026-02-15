@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './User.css'; 
+import './User.css';
 
 interface UserData {
     username: string;
@@ -35,7 +35,7 @@ const Register = (): React.ReactElement => {
         setSuccess(false);
 
         try {
-            const response = await fetch('http://localhost:8080/users/register', {
+            const response = await fetch('http://your_port1:8080/users/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -58,26 +58,26 @@ const Register = (): React.ReactElement => {
         } catch (error: any) {
             setError(error.message);
         }
-    }; 
+    };
 
     return (
         <div className="card-container">
 
             {success ? (<span className="back-button-spacer"></span>)
-                    : (<button onClick={() => navigate('/')} className="back-button">
-                        ← Pàgina principal
-                    </button>)
+                : (<button onClick={() => navigate('/')} className="back-button">
+                    ← Pàgina principal
+                </button>)
             }
-            
+
             <h1 className="gradient-title">Crear compte</h1>
 
             {success ? (
                 <div className="success-message"><p> Compte creat amb èxit! </p>
-                <button 
-                    onClick={() => navigate('/login')}
-                    className="submit-button">
-                    Iniciar sessió
-                </button>
+                    <button
+                        onClick={() => navigate('/login')}
+                        className="submit-button">
+                        Iniciar sessió
+                    </button>
                 </div>
 
             ) : (
@@ -96,52 +96,52 @@ const Register = (): React.ReactElement => {
                         />
                     </div>
                     <div className="form-group">
-                    <label>Nom d'Usuari:</label>
-                    <input
-                    type="text"
-                    name="username"
-                    value={userData.username}
-                    onChange={handleChange}
-                    required
-                    className="text-input"
-                    />
-                </div>
+                        <label>Nom d'Usuari:</label>
+                        <input
+                            type="text"
+                            name="username"
+                            value={userData.username}
+                            onChange={handleChange}
+                            required
+                            className="text-input"
+                        />
+                    </div>
 
-                <div className="form-group">
-                    <label>Email:</label>
-                    <input
-                    type="email"
-                    name="email"
-                    value={userData.email}
-                    onChange={handleChange}
-                    required
-                    className="text-input"
-                    />
-                </div>
+                    <div className="form-group">
+                        <label>Email:</label>
+                        <input
+                            type="email"
+                            name="email"
+                            value={userData.email}
+                            onChange={handleChange}
+                            required
+                            className="text-input"
+                        />
+                    </div>
 
-                <div className="form-group">
-                    <label>Contrasenya:</label>
-                    <input
-                    type="password"
-                    name="password"
-                    value={userData.password}
-                    onChange={handleChange}
-                    required
-                    className="text-input"
-                    />
-                </div>
+                    <div className="form-group">
+                        <label>Contrasenya:</label>
+                        <input
+                            type="password"
+                            name="password"
+                            value={userData.password}
+                            onChange={handleChange}
+                            required
+                            className="text-input"
+                        />
+                    </div>
 
-                <div className="register-prompt">
-                    <p> Ja tens compte? </p>
-                    <button 
-                        onClick={() => navigate('/login')}
-                        className="register-button">
-                        Iniciar sessió
-                    </button>
-                </div>
+                    <div className="register-prompt">
+                        <p> Ja tens compte? </p>
+                        <button
+                            onClick={() => navigate('/login')}
+                            className="register-button">
+                            Iniciar sessió
+                        </button>
+                    </div>
 
-                {error && <p className="error-message" style={{color: 'red'}}>{error}</p>}
-                <button type="submit" className="submit-button">Registrar-se</button>
+                    {error && <p className="error-message" style={{ color: 'red' }}>{error}</p>}
+                    <button type="submit" className="submit-button">Registrar-se</button>
                 </form>
 
             )}

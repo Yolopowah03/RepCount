@@ -8,7 +8,6 @@ from ..services.download_service import stream_file  # type: ignore
 import os
 import time
 import shutil
-import sys
 from ..config import TEMP_UPLOAD_PATH, TEMP_OUTPUT_PATH # type: ignore
 from ..utils import clean_files # type: ignore
 from typing import Dict
@@ -32,11 +31,8 @@ class ConnectionManager:
             websocket = self.active_connections[client_id]
             await websocket.send_json(message)
 
-PYTHON_REPCOUNT_PATH = '/datatmp2/joan/repCount/repCount_code/repCount'
-sys.path.append(PYTHON_REPCOUNT_PATH)
-
 try:
-    from repCount_YOLO11_web import repcount_main # type: ignore
+    from repCount_code.repCount.repCount_YOLO11_web import repcount_main 
 except ImportError:
     raise NotImplementedError("Error d'importació del mòdul repCount_YOLO11_web.")
 
@@ -148,6 +144,8 @@ async def repcount_endpoint(
     
     except Exception as e:
         await manager.send_progress(client_id, {"progress": 0, "status": f"Error al processament del vídeo: {str(e)}"})
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al processament del vídeo: {str(e)}"

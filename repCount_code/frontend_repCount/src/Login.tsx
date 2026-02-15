@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './User.css'; 
+import './User.css';
 
 interface UserData {
     username: string;
@@ -35,7 +35,7 @@ const Login = (): React.ReactElement => {
             formData.append('username', userData.username);
             formData.append('password', userData.password);
 
-            const response = await fetch('http://localhost:8080/users/login', {
+            const response = await fetch('http://your_port1:8080/users/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
@@ -44,7 +44,7 @@ const Login = (): React.ReactElement => {
             });
 
             const data = await response.json();
- 
+
             if (!response.ok) {
                 const errorMessage = data.detail || 'Error al iniciar sessió.';
                 setError(errorMessage);
@@ -58,7 +58,7 @@ const Login = (): React.ReactElement => {
             localStorage.setItem('full_name', data.full_name);
             localStorage.setItem('email', data.email);
 
-            const expirationTime = Date.now() + (30 * 60 * 1000); 
+            const expirationTime = Date.now() + (30 * 60 * 1000);
             localStorage.setItem('token_expiry', expirationTime.toString());
 
             setSuccess(true);
@@ -66,7 +66,7 @@ const Login = (): React.ReactElement => {
             setTimeout(() => navigate('/'), 2000);
 
         } catch (error: any) {
-            setError(error.message); 
+            setError(error.message);
         }
 
     };
@@ -84,39 +84,39 @@ const Login = (): React.ReactElement => {
             ) : (
                 <form onSubmit={handleSubmit} className="login-form">
                     <div className="form-group">
-                    <label>Nom d'Usuari o Email:</label>
-                    <input
-                    type="text"
-                    name="username"
-                    value={userData.username}
-                    onChange={handleChange}
-                    required
-                    className="text-input"
-                    />
+                        <label>Nom d'Usuari o Email:</label>
+                        <input
+                            type="text"
+                            name="username"
+                            value={userData.username}
+                            onChange={handleChange}
+                            required
+                            className="text-input"
+                        />
                     </div>
 
                     <div className="form-group">
                         <label>Contrasenya:</label>
                         <input
-                        type="password"
-                        name="password"
-                        value={userData.password}
-                        onChange={handleChange}
-                        required
-                        className="text-input"
+                            type="password"
+                            name="password"
+                            value={userData.password}
+                            onChange={handleChange}
+                            required
+                            className="text-input"
                         />
                     </div>
 
                     <div className="register-prompt">
                         <p> No tens compte? </p>
-                        <button  className="register-button"
+                        <button className="register-button"
                             onClick={() => navigate('/register')}>
                             Crear un compte nou
                         </button>
                     </div>
 
-                        {error && <p className="error-message" style={{color: 'red'}}>{error}</p>}
-                        <button type="submit" className="submit-button">Iniciar sessió</button>
+                    {error && <p className="error-message" style={{ color: 'red' }}>{error}</p>}
+                    <button type="submit" className="submit-button">Iniciar sessió</button>
                 </form>
             )}
 

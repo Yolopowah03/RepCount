@@ -3,7 +3,6 @@ import cv2 as cv # type: ignore
 import sys
 import json
 import numpy as np
-import importlib
 import time
 import matplotlib.pyplot as plt
 import subprocess
@@ -697,7 +696,7 @@ if __name__ == "__main__":
 
         kpts_dict_list.append(kpts_dict)
     
-    match(cls_idx):
+    match(cls_idx): # type: ignore
         case 0:
             print('Predicted exercise: Bench Press')
             

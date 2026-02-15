@@ -20,16 +20,53 @@ Computer Vision offers new tools that can add improvements and more precise anal
 <img src="repCount_code/frontend_repCount/src/assets/graph_example.jpg" width="500">
 </p>
 
+## Configuració
+
+```
+git clone https://github.com/Yolopowah03/RepCount.git
+cd RepCount
+git lfs pull
+```
+
+### Backend
+
+```
+conda create -n python=3.10 --name repcount
+conda activate repcount
+
+pip install fastapi "uvicorn[standard]"
+pip install uvicorn apscheduler pydantic[email] passlib python-jose python-multipart ultralytics argon2-cffi
+conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+```
+
+### Frontend
+
+```
+conda create -n python=3.10 --name repcount_frontend
+conda activate repcount_frontend
+
+conda install nodejs=20 -c conda-forge -y
+
+cd repCount_code/frontend_repCount
+npm install
+```
+
 ## Inicialització
 
 ### Backend
 
-uvicorn repCount_code.backend_repCount.app.main:app --host=0.0.0.0 --port=8080
+```
+python -m uvicorn repCount_code.backend_repCount.app.main:app --host=your_host1 --port=your_port1
+```
 
 ### Frontend
 
+```
 cd repCount_code/frontend_repCount
-npm run dev -- --port 8079 --host
+npm run dev -- --port your_port2 --host
+```
+
+Al utilitzar diferents your_host1 i your_port1 s'han d'actualizar a les crides del frontend al backend en /repCount_code/backend_repCount/app/main.py i als arxius .tsx de /home/jlara/RepCount/repCount_code/frontend_repCount/src
 
 ## 📁 Estructura del projecte
 
@@ -43,7 +80,6 @@ El pipeline principal del projecte es pot trobar a ./repCount_code/repCount/repC
 ├── models_exercise_seg # Models entrenats de segmentació de màscara YOLO11seg
 ├── models_LSTM # Models entrenats LSTM per a classificació d'exercici
 ├── models_YOLO11_pose # Models entrenats d'extracció de pose YOLO11pose
-├── sapiens # Carpeta de instal·lació de model d'extracció de pose Sapiens
 └── repCount_code
     ├── backend_repCount
     │   ├── app

@@ -128,12 +128,11 @@ def predict_video(video_coords, model, device, class_names=None, seq_len=SEQ_LEN
 
     return class_names[pred_class], avg_probs.cpu().numpy()
 
-def load_checkpoint(path, model, optimizer=None, scheduler=None, map_location=None):
-
-    if map_location is None:
-        map_location = torch.device("cpu")
+def load_checkpoint(path, model, optimizer=None, scheduler=None):
         
-    ckpt = torch.load(path, map_location=map_location)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+        
+    ckpt = torch.load(path, map_location=device, weights_only=False)
     model.load_state_dict(ckpt["model_state_dict"])
     
     if optimizer is not None and "optimizer_state_dict" in ckpt:
@@ -157,7 +156,7 @@ if __name__ == "__main__":
     
     model = LSTMClassifier(input_size=input_size, hidden_size=256, num_layers=2, num_classes=num_classes)
 
-    load_checkpoint(MODEL_PATH, model, map_location="cuda")
+    load_checkpoint(MODEL_PATH, model)
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)

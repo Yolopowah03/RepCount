@@ -2,8 +2,6 @@ import torch #type: ignore
 import torch.nn.functional as F #type: ignore
 import numpy as np
 import torch.nn as nn #type: ignore
-import json
-import os
 
 class LSTMClassifier(nn.Module):
     def __init__(self, input_size=68, hidden_size=256, num_layers=2, num_classes=4, dropout=0.4, num_directions=1):
@@ -117,10 +115,9 @@ def predict_video(video_coords, model, device, class_names=None, seq_len=50):
 
 def load_checkpoint(path, model, optimizer=None, scheduler=None, map_location=None):
 
-    if map_location is None:
-        map_location = torch.device("cpu")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
         
-    ckpt = torch.load(path, map_location=map_location)
+    ckpt = torch.load(path, map_location=device, weights_only=False)
     model.load_state_dict(ckpt["model_state_dict"])
     
     if optimizer is not None and "optimizer_state_dict" in ckpt:
@@ -144,7 +141,7 @@ def lstm_main(args):
 
     model = LSTMClassifier(input_size=input_size, hidden_size=256, num_layers=2, num_classes=num_classes)
 
-    load_checkpoint(args["model_path"], model, map_location="cuda")
+    load_checkpoint(args["model_path"], model)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)

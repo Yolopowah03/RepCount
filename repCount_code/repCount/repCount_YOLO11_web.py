@@ -1,25 +1,16 @@
 import cv2 as cv # type: ignore
-import sys
 import numpy as np
-import importlib
 import matplotlib.pyplot as plt
 import os
 import subprocess
 import time
+from pathlib import Path
 
 # Importació de mòduls 
 
-PYTHON_LSTM_PATH = '/datatmp2/joan/repCount/repCount_code/LSTM'
-PYTHON_YOLO_PATH = '/datatmp2/joan/repCount/repCount_code/YOLO_pose'
-PYTHON_HOMOGRAPHY_PATH = '/datatmp2/joan/repCount/repCount_code/Homography'
-
-for p in (PYTHON_LSTM_PATH, PYTHON_YOLO_PATH, PYTHON_HOMOGRAPHY_PATH):
-    if p not in sys.path:
-        sys.path.append(p)
-
-import predict_LSTM_mod # type: ignore
-import predict_YOLO11_mod # type: ignore
-import homography_mod # type: ignore
+from repCount_code.LSTM import predict_LSTM_mod # type: ignore
+from repCount_code.YOLO_pose import predict_YOLO11_mod # type: ignore
+from repCount_code.Homography import homography_mod # type: ignore
 
 # Classes d'exercicis disponibles
 
@@ -31,15 +22,16 @@ CLASSES = ['bench_press', 'deadlift', 'squat', 'pull_up']
 N_KEYPOINTS_TOTAL = 17
 N_KEYPOINTS_SHORTENED = 13
 
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Configuració YOLO
-YOLO_MODEL_PATH='/datatmp2/joan/repCount/models_YOLO11_pose/yolo11m-pose.pt'
+YOLO_MODEL_PATH = str(BASE_DIR / "models_YOLO11_pose" / "yolo11m-pose.pt")
 VALID_GPU_ID = 3
 SAVE_FRAMES = False
 SAVE_JSON = False
 MIN_CONF = 0.15
 
 # Configuració LSTM
-LSTM_MODEL_PATH = '/datatmp2/joan/repCount/models_LSTM/LSTM_17_RepCount1.pth'
+LSTM_MODEL_PATH = str(BASE_DIR / "models_LSTM" / "LSTM_17_RepCount1.pth")
 VEL = True
 SEQ_LEN = 80
 
@@ -422,9 +414,7 @@ def repcount_deadlift(keypoints, skip_frames):
             # Actualitzar initial positions si es troben millors
             if wrist_ankle_dist < initialPosition['wrist_ankle_dist'] and end_rep == False:
                 initialPosition['wrist_ankle_dist'] = wrist_ankle_dist         
-                
-            print('Initial pos wrist_ankle_dist:', initialPosition['wrist_ankle_dist'])
-                  
+                                  
             #Trobar quan es retorna a la posició inicial
             if wrist_ankle_dist <= (initialPosition['wrist_ankle_dist'] * 1.5):
                 if end_rep == True:
@@ -708,6 +698,8 @@ def repcount_main(args):
     args_pose['min_conf'] = MIN_CONF
     out_pose = predict_YOLO11_mod.yolo_mod(args_pose)
     
+    print('Extracció de pose completada.')
+    
     # Señal de progrés per a mostrar a l'usuari
     if callback:
         percent = 50
@@ -804,7 +796,7 @@ def repcount_main(args):
         
     # Comptatge de repeticions amb diferents funcions segons l'exercici predit
     
-    match(cls_idx):
+    match(cls_idx): # type: ignore
         case 0:
             print('Predicted exercise: Bench Press')
             

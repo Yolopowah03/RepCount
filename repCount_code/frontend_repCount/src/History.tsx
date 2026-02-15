@@ -3,67 +3,67 @@ import { useNavigate } from 'react-router-dom';
 import './History.css';
 
 interface HistoryItem {
-    id: number;
-    user_id: string;
-    exercise: string;
-    rep_count: number;
-    video_path: string;
-    timestamp: string;
-    thumbnail_name: string;
+  id: number;
+  user_id: string;
+  exercise: string;
+  rep_count: number;
+  video_path: string;
+  timestamp: string;
+  thumbnail_name: string;
 }
 
-const base_URL = 'http://localhost:8080/repCount/download/visualization/';
+const base_URL = 'http://your_port1:8080/repCount/download/visualization/';
 
 const fetchUserHistory = async (token: string): Promise<HistoryItem[]> => {
 
-    const endPointUrl = 'http://localhost:8080/users/show_history';
+  const endPointUrl = 'http://your_port1:8080/users/show_history';
 
-    const response = await fetch(endPointUrl, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        }
-    });
+  const response = await fetch(endPointUrl, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    }
+  });
 
-    if (!response.ok) {
-          const data = await response.json();
-          const errorMessage = data.detail || 'Error al descarregar el vídeo.';
-          throw new Error(errorMessage);
-        }
+  if (!response.ok) {
+    const data = await response.json();
+    const errorMessage = data.detail || 'Error al descarregar el vídeo.';
+    throw new Error(errorMessage);
+  }
 
-    const data: HistoryItem[] = await response.json();
-    return data;
+  const data: HistoryItem[] = await response.json();
+  return data;
 };
 
 const HistoryItemRow = ({ item, token }: { item: HistoryItem, token: string | null }) => {
-    
-    const [isImageLoaded, setIsImageLoaded] = useState<boolean>(false);
 
-    return (
-      <li 
-        key={item.id}
-        className="history-item"
-        style={{
-          display: isImageLoaded ? 'flex' : 'none',
-          transition: 'opacity 0.3s ease-in-out',
-        }}
-      > 
-        <img
-          src={`${base_URL}${item.thumbnail_name}/image?token=${token}`}
-          alt="Thumbnail"
-          style={{ maxWidth: '250px', maxHeight: '250px'}}
-          onLoad={() => setIsImageLoaded(true)}
-        />
-          <div className="history-date-box">
-              <span className="history-date">{new Date(item.timestamp).toLocaleString()}</span>
-          </div>
-          <div className="history-details">
-              <h3>{item.exercise}</h3>
-              <p>Repeticions: {item.rep_count}</p>
-          </div>
-      </li>
-    );
+  const [isImageLoaded, setIsImageLoaded] = useState<boolean>(false);
+
+  return (
+    <li
+      key={item.id}
+      className="history-item"
+      style={{
+        display: isImageLoaded ? 'flex' : 'none',
+        transition: 'opacity 0.3s ease-in-out',
+      }}
+    >
+      <img
+        src={`${base_URL}${item.thumbnail_name}/image?token=${token}`}
+        alt="Thumbnail"
+        style={{ maxWidth: '250px', maxHeight: '250px' }}
+        onLoad={() => setIsImageLoaded(true)}
+      />
+      <div className="history-date-box">
+        <span className="history-date">{new Date(item.timestamp).toLocaleString()}</span>
+      </div>
+      <div className="history-details">
+        <h3>{item.exercise}</h3>
+        <p>Repeticions: {item.rep_count}</p>
+      </div>
+    </li>
+  );
 };
 
 function History(): React.ReactElement {
@@ -84,33 +84,34 @@ function History(): React.ReactElement {
   // Comprova si l'usuari està loguejat al entrar a la web
   useEffect(() => {
 
-  if (token) {
-    setIsLoggedIn(true);
-    setUsername(storedUser || 'Usuari');
-    setError('');
-  } else {
-    setIsLoggedIn(false);
-    setUsername('');
-  } }, [token, storedUser]);
+    if (token) {
+      setIsLoggedIn(true);
+      setUsername(storedUser || 'Usuari');
+      setError('');
+    } else {
+      setIsLoggedIn(false);
+      setUsername('');
+    }
+  }, [token, storedUser]);
 
   // Mostrar l'historial
-  
-    useEffect(() => {
-      if (isLoggedIn && token) {
-        setIsLoading(true);
-        fetchUserHistory(token)
-            .then((data) => {
-                setHistoryList(data);
-                setIsLoading(false);
-            })
-            .catch(() => {
-                setError('Error en carregar l\'historial.');
-            })
-            .finally(() => {
-                setIsLoading(false);
-            });
-      }
-    }, [isLoggedIn, token]);
+
+  useEffect(() => {
+    if (isLoggedIn && token) {
+      setIsLoading(true);
+      fetchUserHistory(token)
+        .then((data) => {
+          setHistoryList(data);
+          setIsLoading(false);
+        })
+        .catch(() => {
+          setError('Error en carregar l\'historial.');
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
+  }, [isLoggedIn, token]);
 
   // Gestió de la caducitat del token
   useEffect(() => {
@@ -151,34 +152,34 @@ function History(): React.ReactElement {
   return (
     <div className="card-container history-page">
       <button onClick={() => navigate('/')} className="back-button">
-              ← Pàgina principal
+        ← Pàgina principal
       </button>
 
       <div className="history-header">
-        <h1 className="gradient-title">Historial de {username}</h1>          
+        <h1 className="gradient-title">Historial de {username}</h1>
       </div>
 
       {message && <p className="message-text"> {message} </p>}
-      {error && <p className="error-message" style={{color: 'red'}}>{error}</p>}
+      {error && <p className="error-message" style={{ color: 'red' }}>{error}</p>}
 
 
-        <div className="history-content" style={{color: 'black'}}>
-          {isLoading ? (
-            <div className="loading-spinner">Carregant historial...</div>
-          ) : (
-            <div className="history-list-container">
-                {historyList.length > 0 ? (
-                    <ul className="history-list">
-                        {historyList.map((item) => (
-                            <HistoryItemRow key={item.id} item={item} token={token} />
-                        ))}
-                    </ul>
-                ) :(<p style={{color: 'white'}}> No hi ha entrades a l'historial.</p>
-                    
-                )}
-            </div>         
-          )}
-        </div>
+      <div className="history-content" style={{ color: 'black' }}>
+        {isLoading ? (
+          <div className="loading-spinner">Carregant historial...</div>
+        ) : (
+          <div className="history-list-container">
+            {historyList.length > 0 ? (
+              <ul className="history-list">
+                {historyList.map((item) => (
+                  <HistoryItemRow key={item.id} item={item} token={token} />
+                ))}
+              </ul>
+            ) : (<p style={{ color: 'white' }}> No hi ha entrades a l'historial.</p>
+
+            )}
+          </div>
+        )}
+      </div>
 
     </div>
   );

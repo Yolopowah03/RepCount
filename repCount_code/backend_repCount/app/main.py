@@ -14,14 +14,13 @@ from .routers import processing # type: ignore
 from .models.user_model import Base, engine # type: ignore
 from .utils import clean_files # type: ignore
 
-
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080","http://localhost:8079"], 
+    allow_origins=["http://your_port1:8080","http://your_port1:8079","http://localhost:8080","http://localhost:8079", "http://0.0.0.0:8079", "http://0.0.0.0:8080"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

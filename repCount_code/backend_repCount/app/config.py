@@ -4,8 +4,8 @@ import sys
 MAX_AGE_MINUTES = 60
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-TEMP_UPLOAD_PATH = '/datatmp2/joan/repCount/temp_web/uploads'
-TEMP_OUTPUT_PATH = '/datatmp2/joan/repCount/temp_web/outputs'
+TEMP_UPLOAD_PATH = 'temp_web/uploads'
+TEMP_OUTPUT_PATH = 'temp_web/outputs'
 os.makedirs(TEMP_UPLOAD_PATH, exist_ok=True)
 os.makedirs(TEMP_OUTPUT_PATH, exist_ok=True)
 

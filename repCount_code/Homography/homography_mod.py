@@ -3,8 +3,6 @@ import cv2 # type: ignore
 import os
 import json
 
-LABEL_DIR = '/datatmp2/joan/repCount/LSTM_dataset/train/labels'
-OUTPUT_IMAGE_DIR = '/datatmp2/joan/repCount/results/homography'
 CLASSES = ['bench_press', 'deadlift', 'squat', 'pull_up']
 
 BENCH_PRESS_DISTR = np.array([[0.4127,0.368],[0.6513,0.453],[0.41,0.217],[0.656,0.244]], dtype=np.float32)
@@ -32,7 +30,7 @@ def homography_main(args):
     if args['keypoints'] is None:
         raise ValueError(f'No keypoints found')
 
-    match(args['class_name']):
+    match(args['class_name']): # type: ignore
         case 'bench_press':
             kp_distr_norm = BENCH_PRESS_DISTR
             indices = BENCH_PRESS_INDICES
