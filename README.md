@@ -1,4 +1,4 @@
-## Descripció
+## Description
 
 La Visió per Computador ofereix noves eines que poden aportar millores i més precisió d'anàlisi i arbitratge als esports professionals, amb mètodes com l'estimació de pose i el reconeixement automàtic d'accions. L'objectiu en aquest projecte és el d'a partir d'un vídeo d'exercici pujat a la web per l'usuari, l'eina desenvolupada sigui capaç de identificar l'exercici i comptar les repeticions que es realitzen. Per a reconèixer l'acció de l'usuari, s'utilitza una xarxa LSTM, entrenada amb el model Sapiens d'estimació de pose de Meta. Per al comptatge de repeticions s'utilitza Estimació de Pose amb YOLOv11 i una transformació per homografia per corregir la perspectiva de la càmera. La eina és accessible a través de un navegador, i aquesta ha estat desenvolupada en un entorn frontend React amb una API backend FastAPI. La característica principal en aquesta eina és la seva robustesa a la variació d'angle de gravació, que permet un comptatge precís amb una tolerància gran a les variacions introduïdes per l'usuari al vídeo d'entrada.
 
@@ -20,7 +20,7 @@ Computer Vision offers new tools that can add improvements and more precise anal
 <img src="repCount_code/frontend_repCount/src/assets/graph_example.jpg" width="500">
 </p>
 
-## Configuració
+## Installation
 
 ```
 git clone https://github.com/Yolopowah03/RepCount.git
@@ -51,7 +51,7 @@ cd repCount_code/frontend_repCount
 npm install
 ```
 
-## Inicialització
+## Initialization
 
 ### Backend
 
@@ -66,83 +66,83 @@ cd repCount_code/frontend_repCount
 npm run dev -- --port your_port2 --host
 ```
 
-Al utilitzar diferents your_host1 i your_port1 s'han d'actualizar a les crides del frontend al backend en /repCount_code/backend_repCount/app/main.py i als arxius .tsx de /home/jlara/RepCount/repCount_code/frontend_repCount/src
+When using different your_host1 and your_port1, they must be updated in the frontend calls to the backend in /repCount_code/backend_repCount/app/main.py and in the .tsx files under /repCount_code/frontend_repCount/src
 
-## 📁 Estructura del projecte
+## 📁 Project structure
 
-El pipeline principal del projecte es pot trobar a ./repCount_code/repCount/repCount_YOLO11_web.py
+The main pipeline of the project can be found at ./repCount_code/repCount/repCount_YOLO11_web.py
 
 ```
 .
-├── documents # Paper, presentació i pòster en format PDF amb totes les seves versions entregades
-├── exercise_dataset_seg # Dataset per a entrenament i prova de model de segmentació de màscara YOLO11seg
-├── LSTM_dataset # Dataset per a entrenament i prova de model LSTM de classificació d'exercici
-├── models_exercise_seg # Models entrenats de segmentació de màscara YOLO11seg
-├── models_LSTM # Models entrenats LSTM per a classificació d'exercici
-├── models_YOLO11_pose # Models entrenats d'extracció de pose YOLO11pose
+├── documents # Paper, presentation and poster in PDF format with all submitted versions
+├── exercise_dataset_seg # Dataset for training and testing YOLO11seg mask segmentation model
+├── LSTM_dataset # Dataset for training and testing LSTM exercise classification model
+├── models_exercise_seg # Trained YOLO11seg mask segmentation models
+├── models_LSTM # Trained LSTM models for exercise classification
+├── models_YOLO11_pose # Trained YOLO11pose pose extraction models
 └── repCount_code
     ├── backend_repCount
     │   ├── app
     │   │  ├── core
-    │   │  │   └── security.py # Funcions de seguretat de sessió d'usuari backend web
+    │   │  │   └── security.py # Backend web user session security functions
     │   │  ├── models
-    │   │  │   │── schema.py # Classes model per a requests i responses backend web
-    │   │  │   └── user_model.py # Classes base de dades per a gestió de l'usuari
+    │   │  │   │── schema.py # Model classes for backend web requests and responses
+    │   │  │   └── user_model.py # Database classes for user management
     │   │  │── routers
-    │   │  │   │── processing.py # Endpoints web per al comptador de repeticions i la descàrrega d'arxius
-    │   │  │   └── users.py # Endpoints web per a la gestió de l'usuari
+    │   │  │   │── processing.py # Web endpoints for repetition counter and file download
+    │   │  │   └── users.py # Web endpoints for user management
     │   │  │── services
-    │   │  │   │── download_service.py # Funció per a la descàrrega d'arxius web
-    │   │  │   └── user_service.py # Funcions per a la gestió de la sessió d'usuari
+    │   │  │   │── download_service.py # Web file download function
+    │   │  │   └── user_service.py # User session management functions
     │   │  │
-    │   │  ├── config.py # Paràmetres de configuració backend web
-    │   │  ├── main.py # Configuració d'arrancada i aturada backend web
-    │   │  └── utils.py # Funcions útils backend web (neteja temporal d'arxius)
-    │   └── data # Base de dades API web
+    │   │  ├── config.py # Backend web configuration parameters
+    │   │  ├── main.py # Backend web startup and shutdown configuration
+    │   │  └── utils.py # Backend web utility functions (temporary file cleanup)
+    │   └── data # Web API database
     │
     ├── frontend_repCount
     │   └── src
-    │       ├── assets # Imatges predeterminades per a mostrar a l'API web
-    │       ├── App.tsx/css # Pàgina de indexació
-    │       ├── History.tsx/css # Pàgina de historial d'ús del usuari
-    │       ├── Login.tsx # Pàgina de inici de sessió de l'usuari
-    │       ├── main.tsx # Pàgina de renderització inicial
-    │       ├── Register.tsx # Pàgina de registre de l'usuari
-    │       ├── User.css # Configuració d'estil de les pàgines de l'usuari
-    │       ├── UserProfile.tsx # Pàgina de dades de l'usuari
-    │       └── RepCount.tsx # Pàgina principal per al comptador de repeticions
+    │       ├── assets # Default images to display on the web API
+    │       ├── App.tsx/css # Index page
+    │       ├── History.tsx/css # User usage history page
+    │       ├── Login.tsx # User login page
+    │       ├── main.tsx # Initial rendering page
+    │       ├── Register.tsx # User registration page
+    │       ├── User.css # User pages style configuration
+    │       ├── UserProfile.tsx # User data page
+    │       └── RepCount.tsx # Main page for repetition counter
     │
-    ├── functions # Funcions d'utilitat per a gestionar directoris i datasets
+    ├── functions # Utility functions for managing directories and datasets
     │
     ├── Homography
-    │   ├── affine_2D_mod.py # (Sense Usar) Transformació per a correspondència de keypoints per desplaçament d'imatge, adaptada a API web
-    │   ├── affine_2D.py # (Sense Usar) Transformació sobre un vídeo per a correspondència de keypoints per desplaçament d'imatge
-    │   ├── homography.py # Transformació sobre un vídeo per a correspondència de keypoints per homografia, adaptada a API web
-    │   └── homography_mod.py # Transformació per a correspondència de keypoints per homografia, adaptada a API web
+    │   ├── affine_2D_mod.py # (Unused) Keypoint correspondence transformation for image displacement, adapted for web API
+    │   ├── affine_2D.py # (Unused) Video transformation for keypoint correspondence by image displacement
+    │   ├── homography.py # Video transformation for keypoint correspondence by homography, adapted for web API
+    │   └── homography_mod.py # Keypoint correspondence transformation by homography, adapted for web API
     │
     ├── LSTM
-    │   ├── predict_LSTM.py # Script per a inferir a un directory amb classificador d'exercicis LSTM
-    │   ├── predict_LSTM_mod.py # Script per a inferir de forma automàtica amb el classificador LSTM a cada execució des de la API web.
-    │   └── predict_LSTM.py # Script d'entrenament classificador LSTM
+    │   ├── predict_LSTM.py # Script to infer on a directory with LSTM exercise classifier
+    │   ├── predict_LSTM_mod.py # Script for automatic inference with LSTM classifier on each execution from the web API
+    │   └── predict_LSTM.py # LSTM classifier training script
     │
     ├── repCount
-    │   ├── repCount_Sapiens.py # Script d'execució del pipeline complet sobre un vídeo utilitzant poses inferides pel model Sapiens
-    │   ├── repCount_YOLO11.py # Script d'execució del pipeline complet sobre un vídeo utilitzant poses inferides pel model YOLO11pose
-    │   └── repCount_YOLO11_web.py # Script d'execució del pipeline complet desde la API web utilitzant poses inferides pel model YOLO11pose
+    │   ├── repCount_Sapiens.py # Full pipeline execution script on a video using poses inferred by Sapiens model
+    │   ├── repCount_YOLO11.py # Full pipeline execution script on a video using poses inferred by YOLO11pose model
+    │   └── repCount_YOLO11_web.py # Full pipeline execution script from the web API using poses inferred by YOLO11pose model
     │
     ├── Sapiens_Pose
-    │   ├── predict_pose.sh # Script per a inferir amb Sapiens i construir dataset LSTM
-    │   └── keypoint_guide.txt # Guia de indexos de keypoints Sapiens (format COCO 17)
+    │   ├── predict_pose.sh # Script to infer with Sapiens and build LSTM dataset
+    │   └── keypoint_guide.txt # Sapiens keypoint index guide (COCO 17 format)
     │
     ├── YOLO_pose
-    │   ├── predict_YOLO11_pose.py # Codi per a inferir en un directori d'imatges amb YOLO11seg
-    │   └── predict_YOLO11_mod.py # Codi per a inferir de forma automàtica amb YOLO11seg a cada execució des de la API web.
+    │   ├── predict_YOLO11_pose.py # Code to infer on an image directory with YOLO11seg
+    │   └── predict_YOLO11_mod.py # Code for automatic inference with YOLO11seg on each execution from the web API
     │
     └── YOLO11seg
-        ├── YOLO11seg_predict_exercise.py # Codi per a inferir amb YOLO11seg
-        └── YOLO11seg_train_eval_exercise.py # Codi per a entrenar YOLO11seg
+        ├── YOLO11seg_predict_exercise.py # Code to infer with YOLO11seg
+        └── YOLO11seg_train_eval_exercise.py # Code to train YOLO11seg
 
 
 ```
 
-Joan Lara Formoso - Universitat Autònoma de Barcelona
+Joan Lara Formoso - Autonomous University of Barcelona
